@@ -125,7 +125,7 @@ def test_get_full_dvc_path(tmp_dir, erepo_dir, tmp_path_factory):
 
 def test_non_cached_output(tmp_dir, erepo_dir):
     src = "non_cached_file"
-    dst = src + "_imported"
+    dst = f"{src}_imported"
 
     with erepo_dir.chdir():
         erepo_dir.dvc.run(
@@ -133,7 +133,7 @@ def test_non_cached_output(tmp_dir, erepo_dir):
             cmd="echo hello > non_cached_file",
             single_stage=True,
         )
-        erepo_dir.scm_add([src, src + ".dvc"], commit="add non-cached output")
+        erepo_dir.scm_add([src, f"{src}.dvc"], commit="add non-cached output")
 
     Repo.get(os.fspath(erepo_dir), src, dst)
 

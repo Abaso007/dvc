@@ -46,7 +46,7 @@ class CmdExperimentsInit(CmdBase):
         defaults = {}
         if not self.args.explicit:
             config = self.repo.config["exp"]
-            defaults.update({**self.DEFAULTS, **config})
+            defaults |= {**self.DEFAULTS, **config}
 
         cli_args = compact(
             {

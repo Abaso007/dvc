@@ -26,7 +26,7 @@ def generate_description(stage: "Stage") -> str:
         return "No outputs or dependencies"
 
     if not stage.outs and stage.deps:
-        return "Depends on " + part_desc(stage.deps)
+        return f"Depends on {part_desc(stage.deps)}"
 
     def is_plot_or_metric(out: "Output"):
         return bool(out.plot) or bool(out.metric)
@@ -35,11 +35,11 @@ def generate_description(stage: "Stage") -> str:
 
     outs = list(filterfalse(is_plot_or_metric, stage.outs))
     if outs:
-        desc.append("Outputs " + part_desc(outs))
+        desc.append(f"Outputs {part_desc(outs)}")
 
     plots_and_metrics = list(filter(is_plot_or_metric, stage.outs))
     if plots_and_metrics:
-        desc.append("Reports " + part_desc(plots_and_metrics))
+        desc.append(f"Reports {part_desc(plots_and_metrics)}")
 
     return "; ".join(desc)
 
@@ -110,9 +110,7 @@ def parse_cmd(commands: List[str]) -> str:
     def quote_argument(arg: str):
         if not arg:
             return '""'
-        if " " in arg and '"' not in arg:
-            return f'"{arg}"'
-        return arg
+        return f'"{arg}"' if " " in arg and '"' not in arg else arg
 
     if len(commands) < 2:
         return " ".join(commands)
@@ -122,12 +120,10 @@ def parse_cmd(commands: List[str]) -> str:
 class CmdStageAdd(CmdBase):
     def run(self):
         kwargs = vars(self.args)
-        kwargs.update(
-            {
-                "cmd": parse_cmd(kwargs.pop("command")),
-                "params": parse_params(self.args.params),
-            }
-        )
+        kwargs |= {
+            "cmd": parse_cmd(kwargs.pop("command")),
+            "params": parse_params(self.args.params),
+        }
         self.repo.stage.add(**kwargs)
         return 0
 

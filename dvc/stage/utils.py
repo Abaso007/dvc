@@ -99,9 +99,7 @@ def check_no_externals(stage):
     def _is_external(out):
         # NOTE: in case of `remote://` notation, the user clearly knows that
         # this is an advanced feature and so we shouldn't error-out.
-        if out.is_in_repo or urlparse(out.def_path).scheme == "remote":
-            return False
-        return True
+        return not out.is_in_repo and urlparse(out.def_path).scheme != "remote"
 
     outs = [str(out) for out in stage.outs if _is_external(out)]
     if not outs:
@@ -117,11 +115,9 @@ def check_no_externals(stage):
 def check_circular_dependency(stage):
     from dvc.exceptions import CircularDependencyError
 
-    circular_dependencies = {d.fs_path for d in stage.deps} & {
+    if circular_dependencies := {d.fs_path for d in stage.deps} & {
         o.fs_path for o in stage.outs
-    }
-
-    if circular_dependencies:
+    }:
         raise CircularDependencyError(str(circular_dependencies.pop()))
 
 
@@ -138,8 +134,7 @@ def check_duplicated_arguments(stage):
 
 
 def check_missing_outputs(stage):
-    paths = [str(out) for out in stage.outs if not out.exists]
-    if paths:
+    if paths := [str(out) for out in stage.outs if not out.exists]:
         raise MissingDataSource(paths)
 
 

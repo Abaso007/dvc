@@ -83,7 +83,7 @@ class CmdDataStatus(CmdBase):
             if idx:
                 ui.write()
 
-            label = cls.LABELS.get(stage, stage.capitalize() + " files")
+            label = cls.LABELS.get(stage, f"{stage.capitalize()} files")
             header = f"{label}:"
             color = cls.COLORS.get(stage, None)
 

@@ -53,8 +53,12 @@ def get_dvc_info():
             root_directory = repo.root_dir
             fs_root = get_fs_type(os.path.abspath(root_directory))
             info.append(f"Workspace directory: {fs_root}")
-            info.append(f"Repo: {_get_dvc_repo_info(repo)}")
-            info.append(f"Repo.site_cache_dir: {repo.site_cache_dir}")
+            info.extend(
+                (
+                    f"Repo: {_get_dvc_repo_info(repo)}",
+                    f"Repo.site_cache_dir: {repo.site_cache_dir}",
+                )
+            )
     except NotDvcRepoError:
         pass
     except SCMError:
@@ -121,18 +125,16 @@ def _get_supported_remotes():
             continue
 
         if not fs_cls.get_missing_deps():
-            dependencies = []
-            for requirement in fs_cls.REQUIRES:
-                dependencies.append(
-                    f"{requirement} = {importlib_metadata.version(requirement)}"
-                )
-
+            dependencies = [
+                f"{requirement} = {importlib_metadata.version(requirement)}"
+                for requirement in fs_cls.REQUIRES
+            ]
             remote_info = scheme
             if dependencies:
                 remote_info += " (" + ", ".join(dependencies) + ")"
             supported_remotes.append(remote_info)
 
-    assert len(supported_remotes) >= 1
+    assert supported_remotes
     return "\n\t" + ",\n\t".join(supported_remotes)
 
 
@@ -142,17 +144,21 @@ def get_fs_type(path):
         if part.fstype:
             try:
                 mountpoint = pathlib.Path(part.mountpoint).resolve()
-                partition[mountpoint] = part.fstype + " on " + part.device
+                partition[mountpoint] = f"{part.fstype} on {part.device}"
             except PermissionError:
                 pass
 
     # need to follow the symlink: https://github.com/iterative/dvc/issues/5065
     path = pathlib.Path(path).resolve()
 
-    for parent in itertools.chain([path], path.parents):
-        if parent in partition:
-            return partition[parent]
-    return ("unknown", "none")
+    return next(
+        (
+            partition[parent]
+            for parent in itertools.chain([path], path.parents)
+            if parent in partition
+        ),
+        ("unknown", "none"),
+    )
 
 
 def _get_dvc_repo_info(self):

@@ -145,10 +145,7 @@ def metrics_show(
 
     metrics = _postprocess(metrics)
 
-    if not metrics:
-        return {}
-
-    return metrics[first(metrics)]
+    return metrics[first(metrics)] if metrics else {}
 
 
 def params_show(
@@ -390,7 +387,4 @@ def params_show(
 
     params = _postprocess(params)
 
-    if not params:
-        return {}
-
-    return params[first(params)]
+    return params[first(params)] if params else {}

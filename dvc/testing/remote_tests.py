@@ -48,7 +48,7 @@ class TestRemote:
 
         # Move cache and check status
         # See issue https://github.com/iterative/dvc/issues/4383 for details
-        backup_dir = dvc.cache.local.path + ".backup"
+        backup_dir = f"{dvc.cache.local.path}.backup"
         shutil.move(dvc.cache.local.path, backup_dir)
         status = dvc.cloud.status(foo_hashes)
         _check_status(status, missing={foo_hash})

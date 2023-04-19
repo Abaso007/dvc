@@ -18,12 +18,11 @@ def _sshfs(resource: dict):
     from tpi import TerraformProviderIterative
 
     with TerraformProviderIterative.pemfile(resource) as pem:
-        fs = SSHFileSystem(
+        yield SSHFileSystem(
             host=resource["instance_ip"],
             user="ubuntu",
             keyfile=pem,
         )
-        yield fs
 
 
 class TerraformBackend(BaseMachineBackend):

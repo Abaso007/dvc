@@ -331,8 +331,7 @@ class Stage(params.StageParams):
     @rwlocked(read=["deps"])
     def _changed_deps(self) -> bool:
         for dep in self.deps:
-            status = dep.status()
-            if status:
+            if status := dep.status():
                 logger.debug(
                     "Dependency '%s' of %s changed because it is '%s'.",
                     dep,
@@ -345,8 +344,7 @@ class Stage(params.StageParams):
     @rwlocked(read=["outs"])
     def changed_outs(self) -> bool:
         for out in self.outs:
-            status = out.status()
-            if status:
+            if status := out.status():
                 logger.debug(
                     "Output '%s' of %s changed because it is '%s'.",
                     out,
@@ -468,7 +466,7 @@ class Stage(params.StageParams):
 
     def compute_md5(self) -> Optional[str]:
         # `dvc add`ed files don't need stage md5
-        if self.is_data_source and not (self.is_import or self.is_repo_import):
+        if self.is_data_source and not self.is_import and not self.is_repo_import:
             m = None
         else:
             m = compute_md5(self)
@@ -643,9 +641,10 @@ class Stage(params.StageParams):
         try:
             result = out.checkout(**kwargs)
             added, modified = result or (None, None)
-            if not (added or modified):
+            if added or modified:
+                return "modified" if modified else "added", [str(out)]
+            else:
                 return None, []
-            return "modified" if modified else "added", [str(out)]
         except CheckoutError as exc:
             return "failed", exc.target_infos
 
@@ -670,19 +669,17 @@ class Stage(params.StageParams):
         ret = {}
 
         for entry in entries:
-            ret.update(entry.status())
+            ret |= entry.status()
 
         return ret
 
     def _status_deps(self, ret) -> None:
-        deps_status = self._status(self.deps)
-        if deps_status:
+        if deps_status := self._status(self.deps):
             ret.append({"changed deps": deps_status})
 
     def _status_outs(self, ret, filter_info) -> None:
         filter_outs = self.filter_outs(filter_info)
-        outs_status = self._status(filter_outs)
-        if outs_status:
+        if outs_status := self._status(filter_outs):
             ret.append({"changed outs": outs_status})
 
     def _status_always_changed(self, ret) -> None:

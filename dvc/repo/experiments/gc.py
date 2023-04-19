@@ -41,11 +41,12 @@ def gc(
     remove_exp_refs(repo.scm, to_remove)
     removed = len(to_remove)
 
-    delete_stashes = []
     stash = repo.experiments.celery_queue.stash
-    for stash_rev, entry in stash.stash_revs.items():
-        if not queued or entry.baseline_rev not in keep_revs:
-            delete_stashes.append(stash_rev)
+    delete_stashes = [
+        stash_rev
+        for stash_rev, entry in stash.stash_revs.items()
+        if not queued or entry.baseline_rev not in keep_revs
+    ]
     if delete_stashes:
         repo.experiments.celery_queue.remove(delete_stashes)
     removed += len(delete_stashes)

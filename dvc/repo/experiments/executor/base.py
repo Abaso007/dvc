@@ -303,8 +303,7 @@ class BaseExecutor(ABC):
             )
             ref: Optional[str] = dvc.scm.get_ref(EXEC_BRANCH, follow=False)
             exp_ref = ExpRefInfo.from_ref(ref) if ref else None
-            untracked = dvc.scm.untracked_files()
-            if untracked:
+            if untracked := dvc.scm.untracked_files():
                 logger.warning(
                     "The following untracked files were present in "
                     "the workspace before saving but "
@@ -332,7 +331,7 @@ class BaseExecutor(ABC):
         exp_data = {}
         for stage in stages:
             if isinstance(stage, PipelineStage):
-                exp_data.update(to_lockfile(stage))
+                exp_data |= to_lockfile(stage)
         return dict_sha256(exp_data)
 
     def cleanup(self, infofile: Optional[str] = None):
@@ -486,21 +485,17 @@ class BaseExecutor(ABC):
         repro_force: bool = False
 
         with cls._repro_dvc(
-            info,
-            infofile,
-            log_errors=log_errors,
-            copy_paths=copy_paths,
-            **kwargs,
-        ) as dvc:
+                info,
+                infofile,
+                log_errors=log_errors,
+                copy_paths=copy_paths,
+                **kwargs,
+            ) as dvc:
             if auto_push:
                 cls._validate_remotes(dvc, git_remote)
 
             args, kwargs = cls._repro_args(dvc)
-            if args:
-                targets: Optional[Union[list, str]] = args[0]
-            else:
-                targets = kwargs.get("targets")
-
+            targets = args[0] if args else kwargs.get("targets")
             repro_force = kwargs.get("force", False)
             logger.trace(  # type: ignore[attr-defined]
                 "Executor repro with force = '%s'", str(repro_force)
@@ -592,8 +587,7 @@ class BaseExecutor(ABC):
         ref: Optional[str] = dvc.scm.get_ref(EXEC_BRANCH, follow=False)
         exp_ref: Optional["ExpRefInfo"] = ExpRefInfo.from_ref(ref) if ref else None
         if cls.WARN_UNTRACKED:
-            untracked = dvc.scm.untracked_files()
-            if untracked:
+            if untracked := dvc.scm.untracked_files():
                 logger.warning(
                     (
                         "The following untracked files were present in "

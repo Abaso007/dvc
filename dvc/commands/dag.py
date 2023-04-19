@@ -15,10 +15,7 @@ def _show_ascii(graph: "DiGraph"):
 
     pipelines = get_pipelines(graph)
 
-    ret = []
-    for pipeline in pipelines:
-        ret.append(draw(pipeline.nodes, pipeline.edges))
-
+    ret = [draw(pipeline.nodes, pipeline.edges) for pipeline in pipelines]
     return "\n".join(ret)
 
 
@@ -26,9 +23,7 @@ def _quote_label(node):
     label = str(node)
     # Node names should not contain ":" unless they are quoted with "".
     # See: https://github.com/pydot/pydot/issues/258.
-    if label[0] != '"' and label[-1] != '"':
-        return f'"{label}"'
-    return label
+    return f'"{label}"' if label[0] != '"' and label[-1] != '"' else label
 
 
 def _show_dot(graph: "DiGraph"):
@@ -64,10 +59,7 @@ def _show_mermaid(graph, markdown: bool = False):
         for a, b in edges:
             graph += f"\n\t{node_ids[str(a)]}-->{node_ids[str(b)]}"
 
-    if markdown:
-        return f"```mermaid\n{graph}\n```"
-
-    return graph
+    return f"```mermaid\n{graph}\n```" if markdown else graph
 
 
 def _collect_targets(repo, target, outs):

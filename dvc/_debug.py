@@ -162,9 +162,7 @@ def _get_path_func(tool: str, ext: str):
 
 @contextmanager
 def debugtools(args: Optional["Namespace"] = None, **kwargs):
-    kw = vars(args) if args else {}
-    kw.update(kwargs)
-
+    kw = (vars(args) if args else {}) | kwargs
     with ExitStack() as stack:
         if kw.get("pdb"):
             stack.enter_context(debug())

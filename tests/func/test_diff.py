@@ -40,7 +40,7 @@ def test_added_deep(tmp_dir, scm, dvc):
     assert dvc.diff() == {
         "added": [
             {
-                "path": os.path.join("datas", "data" + os.sep),
+                "path": os.path.join("datas", f"data{os.sep}"),
                 "hash": "0dab3fae569586d4c33272e5011605bf.dir",
             },
             {
@@ -399,7 +399,7 @@ def test_targets_single_dir(tmp_dir, scm, dvc):
     }
 
     assert dvc.diff(targets=["dir"]) == expected_result
-    assert dvc.diff(targets=["dir" + os.path.sep]) == expected_result
+    assert dvc.diff(targets=[f"dir{os.path.sep}"]) == expected_result
 
 
 def test_targets_single_file_in_dir(tmp_dir, scm, dvc):
@@ -470,7 +470,8 @@ def test_targets_single_dir_with_file(tmp_dir, scm, dvc):
 
     assert dvc.diff(targets=["dir_with"], recursive=True) == expected_result
     assert (
-        dvc.diff(targets=["dir_with" + os.path.sep], recursive=True) == expected_result
+        dvc.diff(targets=[f"dir_with{os.path.sep}"], recursive=True)
+        == expected_result
     )
 
 

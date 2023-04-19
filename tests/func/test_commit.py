@@ -177,7 +177,7 @@ def test_commit_granular_dir(tmp_dir, dvc):
 
     cache = tmp_dir / ".dvc" / "cache"
 
-    assert set(cache.glob("*/*")) == set()
+    assert not set(cache.glob("*/*"))
 
     dvc.commit(os.path.join("data", "foo"))
     assert set(cache.glob("*/*")) == {

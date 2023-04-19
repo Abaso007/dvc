@@ -12,8 +12,8 @@ logger = logging.getLogger(__name__)
 
 def _digest(checksum):
     if isinstance(checksum, str):
-        return checksum[0:8]
-    return "{}..{}".format(checksum["old"][0:8], checksum["new"][0:8])
+        return checksum[:8]
+    return f'{checksum["old"][:8]}..{checksum["new"][:8]}'
 
 
 def _show_markdown(diff, show_hash=False, hide_missing=False):
@@ -96,7 +96,7 @@ class CmdDiff(CmdBase):
                 if isinstance(path, dict):
                     path = f"{path['old']} -> {path['new']}"
                 checksum = entry.get("hash")
-                summary[state] += 1 if not path.endswith(os.sep) else 0
+                summary[state] += 0 if path.endswith(os.sep) else 1
                 ui.write(
                     "{space}{checksum}{separator}{path}".format(
                         space="    ",

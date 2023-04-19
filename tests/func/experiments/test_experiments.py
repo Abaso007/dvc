@@ -189,12 +189,7 @@ def test_update_py_params(tmp_dir, scm, dvc, session_queue, copy_script):
     )
 
     def _dos2unix(text):
-        if os.name != "nt":
-            return text
-
-        # NOTE: git on windows will use CRLF, so we have to convert it to LF
-        # in order to compare with the original
-        return text.replace("\r\n", "\n")
+        return text if os.name != "nt" else text.replace("\r\n", "\n")
 
     fs = scm.get_fs(exp_a)
     with fs.open("params.py", mode="r", encoding="utf-8") as fobj:
@@ -510,13 +505,13 @@ def test_fix_exp_head(tmp_dir, scm, tail):
     from dvc.repo.experiments.refs import EXEC_BASELINE
     from dvc.repo.experiments.utils import fix_exp_head
 
-    head = "HEAD" + tail
+    head = f"HEAD{tail}"
     assert head == fix_exp_head(scm, head)
 
     rev = "1" * 40
     scm.set_ref(EXEC_BASELINE, rev)
     assert EXEC_BASELINE + tail == fix_exp_head(scm, head)
-    assert "foo" + tail == fix_exp_head(scm, "foo" + tail)
+    assert f"foo{tail}" == fix_exp_head(scm, f"foo{tail}")
 
 
 @pytest.mark.parametrize(

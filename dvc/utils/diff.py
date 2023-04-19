@@ -50,8 +50,7 @@ def _diff_dicts(old_dict, new_dict, with_unchanged):
     for xpath in xpaths:
         old_val = old[xpath]
         new_val = new[xpath]
-        val_diff = _diff_vals(old_val, new_val, with_unchanged)
-        if val_diff:
+        if val_diff := _diff_vals(old_val, new_val, with_unchanged):
             res[xpath] = val_diff
     return dict(res)
 
@@ -63,8 +62,7 @@ def _diff(old_raw, new_raw, with_unchanged):
     if isinstance(new, dict) or isinstance(old, dict):
         return _diff_dicts(old, new, with_unchanged)
 
-    val_diff = _diff_vals(old, new, with_unchanged)
-    if val_diff:
+    if val_diff := _diff_vals(old, new, with_unchanged):
         return {"": val_diff}
 
     return {}
@@ -76,12 +74,11 @@ def diff(old, new, with_unchanged=False):
 
     res: Dict[str, Dict] = defaultdict(dict)
     for path in paths:
-        path_diff = _diff(
+        if path_diff := _diff(
             old.get(path, {}).get("data", {}),
             new.get(path, {}).get("data", {}),
             with_unchanged,
-        )
-        if path_diff:
+        ):
             res[path] = path_diff
     return dict(res)
 

@@ -46,9 +46,7 @@ def worktree_view_by_remotes(
         def _filter(out: "Output") -> bool:
             if out.remote != remote:
                 return False
-            if view._outs_filter:
-                return view._outs_filter(out)
-            return True
+            return view._outs_filter(out) if view._outs_filter else True
 
         return _filter
 
@@ -79,14 +77,10 @@ def worktree_view(
     """
 
     def stage_filter(stage: "Stage") -> bool:
-        if push and stage.is_repo_import:
-            return False
-        return True
+        return not push or not stage.is_repo_import
 
     def outs_filter(out: "Output") -> bool:
-        if not out.is_in_repo or not out.use_cache or (push and not out.can_push):
-            return False
-        return True
+        return bool(out.is_in_repo and out.use_cache and (not push or out.can_push))
 
     return index.targets_view(
         targets,
@@ -434,7 +428,7 @@ def _get_update_diff_index(
         meta_cmp_key=partial(_meta_checksum, remote.fs),
         with_unchanged=True,
     ):
-        if change.typ == ADD or change.typ == MODIFY:
+        if change.typ in [ADD, MODIFY]:
             entry = change.new
             # preserve md5's which were calculated in out.save() after
             # downloading

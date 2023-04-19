@@ -104,7 +104,7 @@ def init_interactive(
             validator=validator,
             stream=stream,
         )
-        ret.update(compact(response))
+        ret |= compact(response)
         if prompts:
             ui.error_write(styled=True)
     return ret
@@ -143,7 +143,7 @@ def validate_prompts(repo: "Repo", key: str, value: str) -> Union[Any, Tuple[Any
                 f"[prompt.invalid]'{value}' is a directory. "
                 "Please retry with an existing parameters file."
             )
-    elif key in ("code", "data") and not os.path.exists(value):
+    elif key in {"code", "data"} and not os.path.exists(value):
         typ = "file" if is_file(value) else "directory"
         return value, msg_format.format(value, typ)
     return value

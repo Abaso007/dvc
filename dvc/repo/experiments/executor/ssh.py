@@ -230,7 +230,7 @@ class SSHExecutor(BaseExecutor):
 
     def fetch_exps(self, *args, **kwargs) -> Iterable[str]:
         with self.sshfs() as fs:
-            kwargs.update(self._git_client_args(fs))
+            kwargs |= self._git_client_args(fs)
             return super().fetch_exps(*args, **kwargs)
 
     @classmethod

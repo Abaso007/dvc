@@ -27,9 +27,7 @@ class CmdGC(CmdBase):
         if self.args.rev:
             self.args.num = self.args.num or 1
 
-        msg = "This will remove all cache except items used in "
-
-        msg += "the workspace"
+        msg = "This will remove all cache except items used in " + "the workspace"
         if self.args.all_commits:
             msg += " and all git commits"
         else:

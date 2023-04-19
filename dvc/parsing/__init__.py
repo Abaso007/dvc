@@ -114,7 +114,7 @@ def check_interpolations(data: "DictStrAny", where: str, path: str):
     def func(s: "DictStrAny") -> None:
         if is_interpolated_string(s):
             raise ResolveError(
-                _format_preamble(f"'{where}'", path) + "interpolating is not allowed"
+                f"""{_format_preamble(f"'{where}'", path)}interpolating is not allowed"""
             )
 
     return recurse(func)(data)
@@ -368,8 +368,7 @@ class ForeachDefinition:
             )
 
     def _warn_if_overwriting(self, keys: List[str]):
-        warn_for = [k for k in keys if k in self.context]
-        if warn_for:
+        if warn_for := [k for k in keys if k in self.context]:
             linking_verb = "is" if len(warn_for) == 1 else "are"
             logger.warning(
                 (

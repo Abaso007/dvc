@@ -65,8 +65,7 @@ def parse_external_url(url, config=None):
 
 
 def get_fs_config(config, **kwargs):
-    name = kwargs.get("name")
-    if name:
+    if name := kwargs.get("name"):
         try:
             remote_conf = config["remote"][name.lower()]
         except KeyError:
@@ -126,8 +125,7 @@ def _get_cloud_fs(repo_config, **kwargs):
         raise RepoConfigError(str(exc)) from None
 
     if "checksum_jobs" not in remote_conf:
-        checksum_jobs = core_config.get("checksum_jobs")
-        if checksum_jobs:
+        if checksum_jobs := core_config.get("checksum_jobs"):
             remote_conf["checksum_jobs"] = checksum_jobs
 
     cls = get_fs_cls(remote_conf)

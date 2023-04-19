@@ -12,7 +12,11 @@ def _joint_status(pairs):
     status_info = {}
 
     for stage, filter_info in pairs:
-        if stage.frozen and not (stage.is_repo_import or stage.is_versioned_import):
+        if (
+            stage.frozen
+            and not stage.is_repo_import
+            and not stage.is_versioned_import
+        ):
             logger.warning(
                 (
                     "%s is frozen. Its dependencies are"
@@ -20,7 +24,7 @@ def _joint_status(pairs):
                 ),
                 stage,
             )
-        status_info.update(stage.status(check_updates=True, filter_info=filter_info))
+        status_info |= stage.status(check_updates=True, filter_info=filter_info)
 
     return status_info
 
@@ -128,13 +132,12 @@ def status(
             recursive=True,
         )
 
-    ignored = list(
+    if ignored := list(
         compress(
             ["--all-branches", "--all-tags", "--all-commits", "--jobs"],
             [all_branches, all_tags, all_commits, jobs],
         )
-    )
-    if ignored:
+    ):
         msg = "The following options are meaningless for local status: {}"
         raise InvalidArgumentError(msg.format(", ".join(ignored)))
 

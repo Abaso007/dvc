@@ -112,7 +112,7 @@ class Experiments:
     def stash_revs(self) -> Dict[str, "ExpStashEntry"]:
         revs = {}
         for queue in (self.workspace_queue, self.celery_queue):
-            revs.update(queue.stash.stash_revs)
+            revs |= queue.stash.stash_revs
         return revs
 
     def reproduce_one(
@@ -172,9 +172,7 @@ class Experiments:
     def _workspace_resume_rev(self) -> Optional[str]:
         last_checkpoint = self._get_last_checkpoint()
         last_applied = self._get_last_applied()
-        if last_checkpoint and last_applied:
-            return last_applied
-        return None
+        return last_applied if last_checkpoint and last_applied else None
 
     def reproduce_celery(  # noqa: C901
         self, entries: Optional[Iterable["QueueEntry"]] = None, **kwargs
@@ -224,10 +222,10 @@ class Experiments:
                 "abort execution use 'dvc queue kill' or 'dvc queue stop'."
             )
         if failed:
-            names = ", ".join(name for name in failed)
+            names = ", ".join(failed)
             ui.error(f"Failed to reproduce experiment(s) '{names}'")
         if results:
-            self._log_reproduced((rev for rev in results), True)
+            self._log_reproduced(iter(results), True)
         return results
 
     def _log_reproduced(self, revs: Iterable[str], tmp_dir: bool = False):
@@ -236,7 +234,7 @@ class Experiments:
         for rev in revs:
             name = rev_names[rev]
             names.append(name if name else rev[:7])
-        ui.write("\nRan experiment(s): {}".format(", ".join(names)))
+        ui.write(f'\nRan experiment(s): {", ".join(names)}')
         if tmp_dir:
             ui.write(
                 "To apply the results of an experiment to your workspace "
@@ -364,7 +362,7 @@ class Experiments:
 
         results: Dict[str, str] = {}
         for _, exp_result in exec_results.items():
-            results.update(exp_result)
+            results |= exp_result
         return results
 
     def check_baseline(self, exp_rev):
@@ -374,9 +372,7 @@ class Experiments:
 
         exp_baseline = self._get_baseline(exp_rev)
         if exp_baseline is None:
-            # if we can't tell from branch name, fall back to parent commit
-            exp_commit = self.scm.resolve_commit(exp_rev)
-            if exp_commit:
+            if exp_commit := self.scm.resolve_commit(exp_rev):
                 exp_baseline = first(exp_commit.parents)
         if exp_baseline == baseline_sha:
             return exp_baseline
@@ -392,13 +388,8 @@ class Experiments:
         rev = resolve_rev(self.scm, rev)
 
         if rev in self.stash_revs:
-            entry = self.stash_revs.get(rev)
-            if entry:
-                return entry.baseline_rev
-            return None
-
-        ref_info = first(exp_refs_by_rev(self.scm, rev))
-        if ref_info:
+            return entry.baseline_rev if (entry := self.stash_revs.get(rev)) else None
+        if ref_info := first(exp_refs_by_rev(self.scm, rev)):
             return ref_info.baseline_sha
         return None
 
@@ -426,8 +417,7 @@ class Experiments:
         ref_dict = self.scm.describe(revs, base=EXPS_NAMESPACE, exclude=exclude)
         for rev in revs:
             name: Optional[str] = None
-            ref = ref_dict[rev]
-            if ref:
+            if ref := ref_dict[rev]:
                 try:
                     name = ExpRefInfo.from_ref(ref).name
                 except InvalidExpRefError:
@@ -450,7 +440,7 @@ class Experiments:
             self.tempdir_queue,
             self.celery_queue,
         ):
-            result.update(queue.get_running_exps(fetch_refs))
+            result |= queue.get_running_exps(fetch_refs)
         return result
 
     def apply(self, *args, **kwargs):

@@ -43,8 +43,7 @@ def reset_loglevel(request, caplog):
     with suppress(ValueError):
         ini_opt = request.config.getini("log_level")
 
-    level = request.config.getoption("--log-level") or ini_opt
-    if level:
+    if level := request.config.getoption("--log-level") or ini_opt:
         with caplog.at_level(level.upper(), logger="dvc"):
             yield
     else:
@@ -149,11 +148,10 @@ def pytest_configure(config):
         disabled_opt = _get_opt(remote_name, "disable")
 
         enabled = config.getoption(enabled_opt)
-        disabled = config.getoption(disabled_opt)
-        if disabled and enabled:
-            continue  # default behavior if both flags are supplied
+        if disabled := config.getoption(disabled_opt):
+            if enabled:
+                continue  # default behavior if both flags are supplied
 
-        if disabled:
             enabled_remotes.discard(remote_name)
         if enabled:
             enabled_remotes.add(remote_name)

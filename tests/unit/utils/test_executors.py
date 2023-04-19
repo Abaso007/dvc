@@ -33,7 +33,7 @@ def test_cancel_futures(wait, cancel_futures):
 
     if not cancel_futures:
         # there should be no cancelled futures
-        assert len(cancelled) == 0
+        assert not cancelled
         assert len(others) == len(fs)
     else:
         # We can't guarantee the exact number of cancellations, but we can
@@ -43,7 +43,7 @@ def test_cancel_futures(wait, cancel_futures):
         # Similar to the number of cancelled futures, we can't guarantee the
         # exact number that completed. But, we can guarantee that at least
         # one finished.
-        assert len(others) > 0
+        assert others
 
 
 def test_cancel_on_error_context_manager(mocker):
@@ -69,4 +69,4 @@ def test_cancel_on_error_context_manager(mocker):
         assert fut.exception() is None
 
     assert len(cancelled) > 20
-    assert len(others) > 0
+    assert others

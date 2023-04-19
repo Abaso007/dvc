@@ -103,8 +103,9 @@ def build_graph(stages, outs_trie=None):
     outs_trie = outs_trie or build_outs_trie(stages)
 
     for stage in stages:
-        out = outs_trie.shortest_prefix(localfs.path.parts(stage.path)).value
-        if out:
+        if out := outs_trie.shortest_prefix(
+            localfs.path.parts(stage.path)
+        ).value:
             raise StagePathAsOutputError(stage, str(out))
 
     # Building graph

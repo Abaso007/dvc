@@ -189,7 +189,7 @@ def test_add_file_in_dir(tmp_dir, dvc):
     assert stage is not None
     assert len(stage.deps) == 0
     assert len(stage.outs) == 1
-    assert stage.relpath == subdir_path + ".dvc"
+    assert stage.relpath == f"{subdir_path}.dvc"
 
     # Current dir should not be taken into account
     assert stage.wdir == os.path.dirname(stage.path)
@@ -395,7 +395,7 @@ def test_should_update_state_entry_for_directory_after_add(mocker, dvc, tmp_dir)
     assert file_md5_counter.mock.call_count == 6
 
     ls = "dir" if os.name == "nt" else "ls"
-    ret = main(["run", "--single-stage", "-d", "data", "{} {}".format(ls, "data")])
+    ret = main(["run", "--single-stage", "-d", "data", f"{ls} data"])
     assert ret == 0
     assert file_md5_counter.mock.call_count == 8
 
@@ -948,7 +948,7 @@ def test_add_to_cache_dir(tmp_dir, dvc, local_cloud):
 
     shutil.rmtree(data)
     status = dvc.checkout(str(data))
-    assert status["added"] == ["data" + os.sep]
+    assert status["added"] == [f"data{os.sep}"]
     assert data.read_text() == {"foo": "foo", "bar": "bar"}
 
 
@@ -1046,8 +1046,9 @@ def test_add_ignored(tmp_dir, scm, dvc):
     tmp_dir.gen({"dir": {"subdir": {"file": "content"}}, ".gitignore": "dir/"})
     with pytest.raises(FileIsGitIgnored) as exc:
         dvc.add(targets=[os.path.join("dir", "subdir")])
-    assert str(exc.value) == ("bad DVC file name '{}' is git-ignored.").format(
-        os.path.join("dir", "subdir.dvc")
+    assert (
+        str(exc.value)
+        == f"""bad DVC file name '{os.path.join("dir", "subdir.dvc")}' is git-ignored."""
     )
 
 

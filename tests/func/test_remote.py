@@ -170,14 +170,8 @@ def test_partial_push_n_pull(  # noqa: C901
     def unreliable_upload(from_fs, from_info, to_fs, to_info, **kwargs):
         on_error = kwargs["on_error"]
         assert on_error
-        if isinstance(from_info, str):
-            from_info = [from_info]
-        else:
-            from_info = list(from_info)
-        if isinstance(to_info, str):
-            to_info = [to_info]
-        else:
-            to_info = list(to_info)
+        from_info = [from_info] if isinstance(from_info, str) else list(from_info)
+        to_info = [to_info] if isinstance(to_info, str) else list(to_info)
         for i in range(len(from_info) - 1, -1, -1):
             from_i = from_info[i]
             to_i = to_info[i]

@@ -157,9 +157,7 @@ def recurse(f):
             return {g(k): g(v) for k, v in data.items()}
         if isinstance(data, seq):
             return type(data)(map(g, data))
-        if isinstance(data, str):
-            return f(data, *args)
-        return data
+        return f(data, *args) if isinstance(data, str) else data
 
     return wrapper
 

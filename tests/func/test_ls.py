@@ -41,7 +41,7 @@ def create_dvc_pipeline(tmp_dir, dvc):
     tmp_dir.scm_gen({"script.py": script}, commit="init")
     tmp_dir.dvc_gen({"dep": "content"}, commit="init dvc")
     dvc.run(
-        cmd="python script.py {}".format(os.path.join("out", "file")),
+        cmd=f'python script.py {os.path.join("out", "file")}',
         outs=[os.path.join("out", "file")],
         deps=["dep"],
         fname="out.dvc",
@@ -442,7 +442,7 @@ def test_ls_remote_repo_with_rev_recursive(erepo_dir):
 def test_ls_not_existed_url():
     from time import time
 
-    dirname = "__{}_{}".format("not_existed", time())
+    dirname = f"__not_existed_{time()}"
     with pytest.raises(CloneError):
         Repo.ls(dirname, recursive=True)
 

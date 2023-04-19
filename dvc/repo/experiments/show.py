@@ -46,11 +46,11 @@ class _CachedError(DvcException):
 
 
 def _is_scm_error(collected_exp: Dict[str, Any]) -> bool:
-    if "error" in collected_exp and (
-        isinstance(collected_exp["error"], (_CachedError, SCMError, InnerScmError))
-    ):
-        return True
-    return False
+    return "error" in collected_exp and (
+        isinstance(
+            collected_exp["error"], (_CachedError, SCMError, InnerScmError)
+        )
+    )
 
 
 def _format_exp(exp: SerializableExp) -> Dict[str, Any]:
@@ -78,9 +78,8 @@ def collect_experiment_commit(
 ) -> Dict[str, Any]:
     cache = repo.experiments.cache
     # TODO: support filtering serialized exp when param_deps is set
-    if exp_rev != "workspace" and not (force or param_deps):
-        cached_exp = cache.get(exp_rev)
-        if cached_exp:
+    if exp_rev != "workspace" and not force and not param_deps:
+        if cached_exp := cache.get(exp_rev):
             if status == ExpStatus.Running or (
                 isinstance(cached_exp, SerializableExp)
                 and cached_exp.status == ExpStatus.Running.name
@@ -185,7 +184,7 @@ def _collect_complete_experiment(
                 results[rev]["data"].update(exp)
                 results.move_to_end(rev)
             else:
-                exp.update(collected_exp["data"])
+                exp |= collected_exp["data"]
         else:
             exp = collected_exp["data"]
         if rev not in results:
@@ -247,7 +246,7 @@ def _collect_branch(
         )
         if _is_scm_error(collected_exp):
             continue
-        results.update(collected_exp)
+        results |= collected_exp
     return results
 
 
@@ -388,7 +387,7 @@ def update_new(
 
 
 def move_properties_to_head(result: Dict[str, Dict[str, Dict[str, Any]]]):
-    for _, baseline_results in result.items():
+    for baseline_results in result.values():
         checkpoint: bool = False
         head: Dict[str, Any] = {}
         for rev, rev_data in baseline_results.items():
@@ -448,8 +447,8 @@ def show(  # noqa: PLR0913
     assert isinstance(repo.scm, Git)
 
     found_revs: Dict[str, List[str]] = {"workspace": []}
-    found_revs.update(
-        iter_revs(repo.scm, revs, num, all_branches, all_tags, all_commits)
+    found_revs |= iter_revs(
+        repo.scm, revs, num, all_branches, all_tags, all_commits
     )
     cached_refs = list(repo.scm.iter_refs())
     branch_names = get_branch_names(repo.scm, found_revs, refs=cached_refs)
@@ -459,15 +458,15 @@ def show(  # noqa: PLR0913
     )
 
     queued_experiment = (
-        _collect_queued_experiment(
+        {}
+        if hide_queued
+        else _collect_queued_experiment(
             repo,
             found_revs,
             running,
             param_deps=param_deps,
             force=force,
         )
-        if not hide_queued
-        else {}
     )
 
     active_experiment = _collect_active_experiment(
@@ -480,7 +479,9 @@ def show(  # noqa: PLR0913
     )
 
     failed_experiments = (
-        _collect_failed_experiment(
+        {}
+        if hide_failed
+        else _collect_failed_experiment(
             repo,
             found_revs,
             running,
@@ -488,8 +489,6 @@ def show(  # noqa: PLR0913
             onerror=onerror,
             force=force,
         )
-        if not hide_failed
-        else {}
     )
 
     for baseline in found_revs:

@@ -308,17 +308,14 @@ def test_config_show_origin_single(tmp_dir, dvc, capsys):
 
     assert main(["config", "--show-origin", "--project", "remote.myremote.url"]) == 0
     out, _ = capsys.readouterr()
-    assert "{}\t{}\n".format(os.path.join(".dvc", "config"), "s3://bucket/path") in out
+    assert f'{os.path.join(".dvc", "config")}\ts3://bucket/path\n' in out
 
     assert main(["config", "--show-origin", "--local", "remote.myremote.url"]) == 251
 
     assert main(["config", "--list", "--project", "--show-origin"]) == 0
     out, _ = capsys.readouterr()
     assert (
-        "{}\t{}\n".format(
-            os.path.join(".dvc", "config"),
-            "remote.myremote.url=s3://bucket/path",
-        )
+        f'{os.path.join(".dvc", "config")}\tremote.myremote.url=s3://bucket/path\n'
         in out
     )
 
@@ -335,16 +332,11 @@ def test_config_show_origin_merged(tmp_dir, dvc, capsys):
     assert main(["config", "--list", "--show-origin"]) == 0
     out, _ = capsys.readouterr()
     assert (
-        "{}\t{}\n".format(
-            os.path.join(".dvc", "config"),
-            "remote.myremote.url=s3://bucket/path",
-        )
+        f'{os.path.join(".dvc", "config")}\tremote.myremote.url=s3://bucket/path\n'
         in out
     )
 
     assert (
-        "{}\t{}\n".format(
-            os.path.join(".dvc", "config.local"), "remote.myremote.timeout=100"
-        )
+        f'{os.path.join(".dvc", "config.local")}\tremote.myremote.timeout=100\n'
         in out
     )

@@ -8,7 +8,7 @@ def test_table_empty(capsys):
     assert dict(td.items()) == {"Col1": [], "Col2": [], "Col3": []}
     assert td.columns == [[], [], []]
     assert td.keys() == ["Col1", "Col2", "Col3"]
-    assert list(td) == []
+    assert not list(td)
     assert td.Col1 == []
     assert td.Col2 == []
     assert td.Col3 == []

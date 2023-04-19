@@ -17,9 +17,7 @@ def _path(entry):
 
 
 def _hash(entry):
-    if entry and entry.hash_info:
-        return entry.hash_info.value
-    return None
+    return entry.hash_info.value if entry and entry.hash_info else None
 
 
 def _diff(old, new, with_missing=False):

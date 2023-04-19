@@ -89,9 +89,7 @@ class WorkspaceQueue(BaseStashQueue):
         try:
             while True:
                 entry, executor = self.get()
-                results.update(
-                    self._reproduce_entry(entry, executor, copy_paths=copy_paths)
-                )
+                results |= self._reproduce_entry(entry, executor, copy_paths=copy_paths)
         except ExpQueueEmptyError:
             pass
         return results
@@ -138,8 +136,7 @@ class WorkspaceQueue(BaseStashQueue):
         exec_result: "ExecutorResult",
     ) -> Dict[str, str]:
         results: Dict[str, str] = {}
-        exp_rev = exp.scm.get_ref(EXEC_BRANCH)
-        if exp_rev:
+        if exp_rev := exp.scm.get_ref(EXEC_BRANCH):
             assert exec_result.exp_hash
             logger.debug("Collected experiment '%s'.", exp_rev[:7])
             results[exp_rev] = exec_result.exp_hash
@@ -241,8 +238,7 @@ class WorkspaceQueue(BaseStashQueue):
             # run, show the latest checkpoint as running.
             if info.status == TaskStatus.SUCCESS:
                 return result
-            last_rev = self.scm.get_ref(EXEC_BRANCH)
-            if last_rev:
+            if last_rev := self.scm.get_ref(EXEC_BRANCH):
                 result[last_rev] = info.asdict()
             else:
                 result[self._EXEC_NAME] = info.asdict()

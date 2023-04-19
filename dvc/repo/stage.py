@@ -79,8 +79,9 @@ def _collect_specific_target(
         msg = "Checking if stage '%s' is in '%s'"
         logger.debug(msg, target, PROJECT_FILE)
         if not (recursive and loader.fs.isdir(target)):
-            stages = _maybe_collect_from_dvc_yaml(loader, target, with_deps)
-            if stages:
+            if stages := _maybe_collect_from_dvc_yaml(
+                loader, target, with_deps
+            ):
                 return stages, file, name
     elif not with_deps and is_valid_filename(file):
         stages = loader.load_all(file, name)
@@ -238,9 +239,7 @@ class StageLoad:
             return stages.keys()
         if accept_group and stages.is_foreach_generated(name):
             return self._get_group_keys(stages, name)
-        if glob:
-            return fnmatch.filter(stages.keys(), name)
-        return [name]
+        return fnmatch.filter(stages.keys(), name) if glob else [name]
 
     def load_all(
         self,
@@ -345,10 +344,11 @@ class StageLoad:
             return collect_inside_path(path, graph or self.repo.index.graph)
 
         stages = self.from_target(target, glob=glob)
-        if not with_deps:
-            return stages
-
-        return _collect_with_deps(stages, graph or self.repo.index.graph)
+        return (
+            _collect_with_deps(stages, graph or self.repo.index.graph)
+            if with_deps
+            else stages
+        )
 
     def collect_granular(
         self,
@@ -384,12 +384,9 @@ class StageLoad:
         stages, file, _ = _collect_specific_target(self, target, with_deps, recursive)
         if not stages:
             if not (recursive and self.fs.isdir(target)):
-                try:
+                with suppress(OutputNotFoundError):
                     (out,) = self.repo.find_outs_by_path(target, strict=False)
                     return [StageInfo(out.stage, self.fs.path.abspath(target))]
-                except OutputNotFoundError:
-                    pass
-
             from dvc.dvcfile import is_valid_filename
             from dvc.stage.exceptions import StageFileDoesNotExistError, StageNotFound
 

@@ -35,10 +35,7 @@ def _adapt_typ(typ: str) -> str:
     if typ == ADD:
         return "added"
 
-    if typ == DELETE:
-        return "deleted"
-
-    return typ
+    return "deleted" if typ == DELETE else typ
 
 
 def _adapt_path(change: "Change") -> str:

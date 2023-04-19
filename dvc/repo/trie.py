@@ -24,17 +24,7 @@ def build_outs_trie(stages):
                 parent = outs.shortest_prefix(out_key).value
                 overlapping = out
             if parent and overlapping:
-                msg = (
-                    "The output paths:\n'{}'('{}')\n'{}'('{}')\n"
-                    "overlap and are thus in the same tracked directory.\n"
-                    "To keep reproducibility, outputs should be in separate "
-                    "tracked directories or tracked individually."
-                ).format(
-                    str(parent),
-                    parent.stage.addressing,
-                    str(overlapping),
-                    overlapping.stage.addressing,
-                )
+                msg = f"The output paths:\n'{str(parent)}'('{parent.stage.addressing}')\n'{str(overlapping)}'('{overlapping.stage.addressing}')\noverlap and are thus in the same tracked directory.\nTo keep reproducibility, outputs should be in separate tracked directories or tracked individually."
                 raise OverlappingOutputPathsError(parent, overlapping, msg)
 
             outs[out_key] = out

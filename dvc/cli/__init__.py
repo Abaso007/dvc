@@ -83,8 +83,7 @@ def _log_exceptions(exc: Exception) -> Optional[int]:
             "conda": f"conda install -c conda-forge dvc-{proto}",
         }
 
-        cmd = by_pkg.get(PKG)
-        if cmd:
+        if cmd := by_pkg.get(PKG):
             link = format_link("https://dvc.org/doc/install")
             hint = (
                 "To install dvc with those dependencies, run:\n"

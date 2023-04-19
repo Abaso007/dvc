@@ -284,7 +284,7 @@ def test_view_combined_filter(tmp_dir, scm, dvc, run_copy):
         outs_filter=lambda o: o.def_path == "foo",
     )
     assert set(view.stages) == {stage2}
-    assert set(view.outs) == set()
+    assert not set(view.outs)
 
     view = index.targets_view(
         None,

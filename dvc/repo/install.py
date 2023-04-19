@@ -79,7 +79,4 @@ def install(self: "Repo", use_pre_commit_tool: bool = False) -> None:
     driver = "dvc git-hook merge-driver --ancestor %O --our %A --their %B "
     scm.install_merge_driver("dvc", "DVC merge driver", driver)
 
-    if use_pre_commit_tool:
-        return pre_commit_install(scm)
-
-    return install_hooks(scm)
+    return pre_commit_install(scm) if use_pre_commit_tool else install_hooks(scm)

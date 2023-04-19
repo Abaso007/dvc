@@ -20,9 +20,7 @@ def _is_comment(rule):
 
 
 def _remove_slash(rule):
-    if rule.startswith("\\"):
-        return rule[1:]
-    return rule
+    return rule[1:] if rule.startswith("\\") else rule
 
 
 def _match_all_level(rule):
@@ -42,14 +40,8 @@ def change_rule(rule, rel):
     not_ignore, rule = _not_ignore(rule)
     match_all, rule = _match_all_level(rule)
     rule = _remove_slash(rule)
-    if not match_all:
-        rule = f"/{rule}"
-    else:
-        rule = f"/**/{rule}"
-    if not_ignore:
-        rule = f"!/{rel}{rule}"
-    else:
-        rule = f"/{rel}{rule}"
+    rule = f"/**/{rule}" if match_all else f"/{rule}"
+    rule = f"!/{rel}{rule}" if not_ignore else f"/{rel}{rule}"
     return normalize_file(rule)
 
 

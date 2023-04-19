@@ -38,7 +38,7 @@ def get(url, path, out=None, rev=None, jobs=None):
     # because it will create a symlink to tmpfs, which defeats the purpose
     # and won't work with reflink/hardlink.
     dpath = os.path.dirname(os.path.abspath(out))
-    tmp_dir = os.path.join(dpath, "." + str(shortuuid.uuid()))
+    tmp_dir = os.path.join(dpath, f".{str(shortuuid.uuid())}")
 
     # Try any links possible to avoid data duplication.
     #
@@ -52,23 +52,21 @@ def get(url, path, out=None, rev=None, jobs=None):
     cache_types = ["reflink", "hardlink", "copy"]
     try:
         with external_repo(
-            url=url,
-            rev=rev,
-            subrepos=True,
-            uninitialized=True,
-            cache_dir=tmp_dir,
-            cache_types=cache_types,
-        ) as repo:
+                    url=url,
+                    rev=rev,
+                    subrepos=True,
+                    uninitialized=True,
+                    cache_dir=tmp_dir,
+                    cache_types=cache_types,
+                ) as repo:
             from dvc.fs.data import DataFileSystem
 
             fs: Union[DataFileSystem, "DVCFileSystem"]
             if os.path.isabs(path):
                 fs = DataFileSystem(index=repo.index.data["local"])
-                fs_path = fs.from_os_path(path)
             else:
                 fs = repo.dvcfs
-                fs_path = fs.from_os_path(path)
-
+            fs_path = fs.from_os_path(path)
             with Callback.as_tqdm_callback(
                 desc=f"Downloading {fs.path.name(path)}",
                 unit="files",

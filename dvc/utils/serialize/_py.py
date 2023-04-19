@@ -97,16 +97,14 @@ def _ast_tree_to_dict(tree, only_self_params=False, lineno=False):
     for _body in tree.body:
         try:
             if isinstance(_body, (ast.Assign, ast.AnnAssign)):
-                result.update(_ast_assign_to_dict(_body, only_self_params, lineno))
+                result |= _ast_assign_to_dict(_body, only_self_params, lineno)
             elif isinstance(_body, ast.ClassDef):
-                result.update({_body.name: _ast_tree_to_dict(_body, lineno=lineno)})
+                result[_body.name] = _ast_tree_to_dict(_body, lineno=lineno)
             elif isinstance(_body, ast.FunctionDef) and _body.name == "__init__":
                 result.update(
                     _ast_tree_to_dict(_body, only_self_params=True, lineno=lineno)
                 )
-        except ValueError:
-            continue
-        except AttributeError:
+        except (ValueError, AttributeError):
             continue
     return result
 

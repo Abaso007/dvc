@@ -6,10 +6,7 @@ from dvc.repo.experiments.queue.base import QueueDoneResult
 def test_remove_queued(test_queue, mocker):
     queued_test = ["queue1", "queue2", "queue3"]
 
-    stash_dict = {}
-    for name in queued_test:
-        stash_dict[name] = mocker.Mock()
-
+    stash_dict = {name: mocker.Mock() for name in queued_test}
     msg_dict = {}
     entry_dict = {}
     for name in queued_test:
@@ -47,10 +44,7 @@ def test_remove_done(test_queue, mocker):
     failed_test = ["failed1", "failed2", "failed3"]
     success_test = ["success1", "success2", "success3"]
 
-    stash_dict = {}
-    for name in failed_test:
-        stash_dict[name] = mocker.Mock()
-
+    stash_dict = {name: mocker.Mock() for name in failed_test}
     msg_dict = {}
     entry_dict = {}
     for name in concat(failed_test, success_test):

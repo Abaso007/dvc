@@ -44,9 +44,7 @@ def machine_instance(tmp_dir, dvc, mocker):
         conf["machine"]["foo"] = {"cloud": "aws"}
 
     def mock_instances(name=None, **kwargs):
-        if name == "foo":
-            return iter([TEST_INSTANCE])
-        return iter([])
+        return iter([TEST_INSTANCE]) if name == "foo" else iter([])
 
     mocker.patch(
         "tpi.terraform.TerraformBackend.instances",

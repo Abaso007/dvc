@@ -45,7 +45,7 @@ def make_tmp_dir(tmp_path_factory, request, worker_id):
 
         cache = CACHE.get((scm, dvc, subdir))
         if not cache:
-            cache_dir = tmp_path_factory.mktemp("dvc-test-cache" + worker_id)
+            cache_dir = tmp_path_factory.mktemp(f"dvc-test-cache{worker_id}")
             TmpDir(cache_dir).init(scm=scm, dvc=dvc, subdir=subdir)
             CACHE[(scm, dvc, subdir)] = cache = os.fspath(cache_dir)
 

@@ -1,5 +1,6 @@
 """Manages dvc lock file."""
 
+
 import hashlib
 import os
 from abc import ABC, abstractmethod
@@ -16,11 +17,7 @@ from dvc.utils import format_link
 DEFAULT_TIMEOUT = 3
 
 
-FAILED_TO_LOCK_MESSAGE = (
-    "Unable to acquire lock. Most likely another DVC process is running or "
-    "was terminated abruptly. Check the page {} for other possible reasons "
-    "and to learn how to resolve this."
-).format(format_link("https://dvc.org/doc/user-guide/troubleshooting#lock-issue"))
+FAILED_TO_LOCK_MESSAGE = f'Unable to acquire lock. Most likely another DVC process is running or was terminated abruptly. Check the page {format_link("https://dvc.org/doc/user-guide/troubleshooting#lock-issue")} for other possible reasons and to learn how to resolve this.'
 
 
 class LockError(DvcException):
@@ -100,13 +97,7 @@ class Lock(LockBase):
     def _do_lock(self):
         try:
             self._lock_failed = False
-            with Tqdm(
-                bar_format="{desc}",
-                disable=not self._friendly,
-                desc="If DVC froze, see `hardlink_lock` in {}".format(
-                    format_link("https://man.dvc.org/config#core")
-                ),
-            ):
+            with Tqdm(bar_format="{desc}", disable=not self._friendly, desc=f'If DVC froze, see `hardlink_lock` in {format_link("https://man.dvc.org/config#core")}'):
                 self._lock = zc.lockfile.LockFile(self._lockfile)
         except zc.lockfile.LockError:
             self._lock_failed = True
@@ -191,7 +182,7 @@ class HardlinkLock(flufl.lock.Lock, LockBase):
                 self._claimfile.encode()
             )
             filename = hasher.hexdigest()
-            self._claimfile = os.path.join(self._tmp_dir, filename + ".lock")
+            self._claimfile = os.path.join(self._tmp_dir, f"{filename}.lock")
 
 
 def make_lock(lockfile, tmp_dir=None, friendly=False, hardlink_lock=False):

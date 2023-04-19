@@ -28,15 +28,14 @@ class CmdExperimentsRemove(CmdBase):
 
         self.check_arguments()
 
-        removed = self.repo.experiments.remove(
+        if removed := self.repo.experiments.remove(
             exp_names=self.args.experiment,
             all_commits=self.args.all_commits,
             rev=self.args.rev,
             num=self.args.num,
             queue=self.args.queue,
             git_remote=self.args.git_remote,
-        )
-        if removed:
+        ):
             ui.write(f"Removed experiments: {humanize.join(map(repr, removed))}")
         else:
             ui.write("No experiments to remove.")

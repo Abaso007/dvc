@@ -72,12 +72,14 @@ def verify_image(path, version, filename, content, html_path, json_result):
     with open(html_path, encoding="utf-8") as fd:
         html_content = fd.read()
 
-    image_data = {}
-    for datapoint in json_result[filename]:
-        if datapoint["revisions"] == [version]:
-            image_data = datapoint
-            break
-
+    image_data = next(
+        (
+            datapoint
+            for datapoint in json_result[filename]
+            if datapoint["revisions"] == [version]
+        ),
+        {},
+    )
     assert image_data, f"{version} data for {filename} was not found"
     assert image_data["type"] == "image"
     output_filename = filename.replace("/", "_")

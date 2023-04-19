@@ -301,9 +301,7 @@ class Config(dict):
 
     def read(self, level=None):
         # NOTE: we read from a merged config by default, same as git config
-        if level is None:
-            return self.load_config_to_level()
-        return self.load_one(level)
+        return self.load_config_to_level() if level is None else self.load_one(level)
 
     @contextmanager
     def edit(self, level=None, validate=True):
@@ -340,8 +338,7 @@ def _parse_named(conf):
     result: Dict[str, Dict] = {"remote": {}, "machine": {}}
 
     for section, val in conf.items():
-        match = re_find(r'^\s*(remote|machine)\s*"(.*)"\s*$', section)
-        if match:
+        if match := re_find(r'^\s*(remote|machine)\s*"(.*)"\s*$', section):
             key, name = match
             result[key][name] = val
         else:

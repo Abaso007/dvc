@@ -144,7 +144,5 @@ class TempDirQueue(WorkspaceQueue):
     def get_running_exps(self, fetch_refs: bool = True) -> Dict[str, Dict]:
         result: Dict[str, Dict] = {}
         for entry in self.iter_active():
-            result.update(
-                fetch_running_exp_from_temp_dir(self, entry.stash_rev, fetch_refs)
-            )
+            result |= fetch_running_exp_from_temp_dir(self, entry.stash_rev, fetch_refs)
         return result

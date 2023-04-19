@@ -27,10 +27,10 @@ def collect_and_send_report(args=None, return_code=None):
 
     # Include command execution information on the report only when available.
     if args and hasattr(args, "func"):
-        report.update({"cmd_class": args.func.__name__})
+        report["cmd_class"] = args.func.__name__
 
     if return_code is not None:
-        report.update({"cmd_return_code": return_code})
+        report["cmd_return_code"] = return_code
 
     with tempfile.NamedTemporaryFile(delete=False, mode="w") as fobj:
         json.dump(report, fobj)
@@ -106,8 +106,7 @@ def _runtime_info():
     from dvc import __version__
     from dvc.utils import is_binary
 
-    ci_id = _generate_ci_id()
-    if ci_id:
+    if ci_id := _generate_ci_id():
         group_id, user_id = ci_id
     else:
         group_id, user_id = None, find_or_create_user_id()

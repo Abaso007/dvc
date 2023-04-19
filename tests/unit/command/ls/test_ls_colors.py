@@ -30,7 +30,7 @@ def test_ls_colors_out_exec():
 
 
 def test_ls_colors_out_ext():
-    ls_colors = LsColors(LsColors.default + ":*.xml=01;33")
+    ls_colors = LsColors(f"{LsColors.default}:*.xml=01;33")
     assert colorize(ls_colors)("file.xml", "o") == "\x1b[01;33mfile.xml\x1b[0m"
 
 
@@ -50,7 +50,7 @@ def test_ls_colors_exec():
 
 
 def test_ls_colors_ext():
-    ls_colors = LsColors(LsColors.default + ":*.xml=01;33")
+    ls_colors = LsColors(f"{LsColors.default}:*.xml=01;33")
     assert colorize(ls_colors)("file.xml") == "\x1b[01;33mfile.xml\x1b[0m"
 
 

@@ -324,11 +324,7 @@ def test_stage_run_checkpoint(tmp_dir, dvc, mocker, checkpoint):
     mocker.patch.object(stage, "save")
 
     mock_cmd_run = mocker.patch("dvc.stage.run.cmd_run")
-    if checkpoint:
-        callback = mocker.Mock()
-    else:
-        callback = None
-
+    callback = mocker.Mock() if checkpoint else None
     with lock_repo(dvc):
         run_stage(stage, checkpoint_func=callback)
     mock_cmd_run.assert_called_with(

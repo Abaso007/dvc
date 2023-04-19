@@ -46,8 +46,7 @@ def transform_targets(args):
     from funcy import count_reps
 
     counts = count_reps(ensure_list(args.targets))
-    dupes = [key for key, count in counts.items() if count > 1]
-    if dupes:
+    if dupes := [key for key, count in counts.items() if count > 1]:
         msg = ", ".join(f"[b]{key}[/]" for key in dupes)
         ui.error_write(f"ignoring duplicated targets: {msg}", styled=True)
     args.targets = list(counts)
@@ -60,8 +59,9 @@ def check_arg_combinations(args):
     to_cache = kwargs.get("out") and not to_remote
 
     if to_remote or to_cache:
-        message = "{option} can't be used with "
-        message += "--to-remote" if to_remote else "-o"
+        message = "{option} can't be used with " + (
+            "--to-remote" if to_remote else "-o"
+        )
         if len(args.targets) != 1:
             invalid_opt = "multiple targets"
         elif args.no_commit:

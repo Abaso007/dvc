@@ -19,21 +19,7 @@ def test_check_ignore(tmp_dir, dvc, file, ret, output, caplog, capsys):
     assert "Having any troubles?" not in caplog.text
 
 
-@pytest.mark.parametrize(
-    "file,ret,output",
-    [
-        ("file", 0, f"{DvcIgnore.DVCIGNORE_FILE}:1:f*\tfile\n"),
-        ("foo", 0, f"{DvcIgnore.DVCIGNORE_FILE}:2:!foo\tfoo\n"),
-        (
-            os.path.join("dir", "foobar"),
-            0,
-            "{}:1:foobar\t{}\n".format(
-                os.path.join("dir", DvcIgnore.DVCIGNORE_FILE),
-                os.path.join("dir", "foobar"),
-            ),
-        ),
-    ],
-)
+@pytest.mark.parametrize("file,ret,output", [("file", 0, f"{DvcIgnore.DVCIGNORE_FILE}:1:f*\tfile\n"), ("foo", 0, f"{DvcIgnore.DVCIGNORE_FILE}:2:!foo\tfoo\n"), (os.path.join("dir", "foobar"), 0, f'{os.path.join("dir", DvcIgnore.DVCIGNORE_FILE)}:1:foobar\t{os.path.join("dir", "foobar")}\n')])
 def test_check_ignore_details(tmp_dir, dvc, file, ret, output, capsys):
     tmp_dir.gen(DvcIgnore.DVCIGNORE_FILE, "f*\n!foo")
     tmp_dir.gen({"dir": {DvcIgnore.DVCIGNORE_FILE: "foobar"}})
@@ -91,7 +77,7 @@ def test_check_ignore_sub_repo(tmp_dir, dvc, capsys):
 
     assert main(["check-ignore", "-d", os.path.join("dir", "foo")]) == 0
     out, _ = capsys.readouterr()
-    assert "in sub_repo:{}\t{}".format("dir", os.path.join("dir", "foo")) in out
+    assert f'in sub_repo:dir\t{os.path.join("dir", "foo")}' in out
 
 
 def test_check_sub_dir_ignore_file(tmp_dir, dvc, capsys):
@@ -106,10 +92,7 @@ def test_check_sub_dir_ignore_file(tmp_dir, dvc, capsys):
 
     out, _ = capsys.readouterr()
     assert (
-        "{}:2:foo\t{}".format(
-            os.path.join("dir", DvcIgnore.DVCIGNORE_FILE),
-            os.path.join("dir", "foo"),
-        )
+        f'{os.path.join("dir", DvcIgnore.DVCIGNORE_FILE)}:2:foo\t{os.path.join("dir", "foo")}'
         in out
     )
 

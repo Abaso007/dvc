@@ -113,8 +113,9 @@ def test_wdir_failed_to_interpolate(tmp_dir, dvc, wdir, expected_msg):
     with pytest.raises(ResolveError) as exc_info:
         definition.resolve()
 
-    assert escape_ansi(str(exc_info.value)) == (
-        "failed to parse 'stages.build.wdir' in 'dvc.yaml':" + expected_msg
+    assert (
+        escape_ansi(str(exc_info.value))
+        == f"failed to parse 'stages.build.wdir' in 'dvc.yaml':{expected_msg}"
     )
     assert definition.context == {"models": {"bar": "bar"}}
 

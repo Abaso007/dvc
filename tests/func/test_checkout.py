@@ -358,7 +358,7 @@ def test_checkout_moved_cache_dir_with_symlinks(tmp_dir, dvc):
     old_data_link = os.path.realpath(os.path.join("data", "file"))
 
     old_cache_dir = dvc.cache.local.path
-    new_cache_dir = old_cache_dir + "_new"
+    new_cache_dir = f"{old_cache_dir}_new"
     os.rename(old_cache_dir, new_cache_dir)
 
     ret = main(["cache", "dir", new_cache_dir])
@@ -432,7 +432,7 @@ def test_partial_checkout(tmp_dir, dvc, target):
     tmp_dir.dvc_gen({"dir": {"subdir": {"file": "file"}, "other": "other"}})
     shutil.rmtree("dir")
     stats = dvc.checkout([target])
-    assert stats["added"] == ["dir" + os.sep]
+    assert stats["added"] == [f"dir{os.sep}"]
     assert list(walk_files("dir")) == [os.path.join("dir", "subdir", "file")]
 
 
@@ -459,11 +459,11 @@ def test_stats_on_checkout(tmp_dir, dvc, scm):
     )
     scm.checkout("HEAD~")
     stats = dvc.checkout()
-    assert set(stats["deleted"]) == {"dir" + os.sep, "foo", "bar"}
+    assert set(stats["deleted"]) == {f"dir{os.sep}", "foo", "bar"}
 
     scm.checkout("-")
     stats = dvc.checkout()
-    assert set(stats["added"]) == {"bar", "dir" + os.sep, "foo"}
+    assert set(stats["added"]) == {"bar", f"dir{os.sep}", "foo"}
 
     tmp_dir.gen({"lorem": "lorem", "bar": "new bar", "dir2": {"file": "file"}})
     (tmp_dir / "foo").unlink()
@@ -474,12 +474,12 @@ def test_stats_on_checkout(tmp_dir, dvc, scm):
     stats = dvc.checkout()
     assert set(stats["modified"]) == {"bar"}
     assert set(stats["added"]) == {"foo"}
-    assert set(stats["deleted"]) == {"lorem", "dir2" + os.sep}
+    assert set(stats["deleted"]) == {"lorem", f"dir2{os.sep}"}
 
     scm.checkout("-")
     stats = dvc.checkout()
     assert set(stats["modified"]) == {"bar"}
-    assert set(stats["added"]) == {"dir2" + os.sep, "lorem"}
+    assert set(stats["added"]) == {f"dir2{os.sep}", "lorem"}
     assert set(stats["deleted"]) == {"foo"}
 
 
@@ -518,11 +518,11 @@ def test_stats_on_added_file_from_tracked_dir(tmp_dir, dvc, scm):
     tmp_dir.gen("dir/subdir/newfile", "newfile")
     tmp_dir.dvc_add("dir", commit="add newfile")
     scm.checkout("HEAD~")
-    assert dvc.checkout() == {**empty_checkout, "modified": ["dir" + os.sep]}
+    assert dvc.checkout() == {**empty_checkout, "modified": [f"dir{os.sep}"]}
     assert dvc.checkout() == empty_checkout
 
     scm.checkout("-")
-    assert dvc.checkout() == {**empty_checkout, "modified": ["dir" + os.sep]}
+    assert dvc.checkout() == {**empty_checkout, "modified": [f"dir{os.sep}"]}
     assert dvc.checkout() == empty_checkout
 
 
@@ -535,11 +535,11 @@ def test_stats_on_updated_file_from_tracked_dir(tmp_dir, dvc, scm):
     tmp_dir.gen("dir/subdir/file", "what file?")
     tmp_dir.dvc_add("dir", commit="update file")
     scm.checkout("HEAD~")
-    assert dvc.checkout() == {**empty_checkout, "modified": ["dir" + os.sep]}
+    assert dvc.checkout() == {**empty_checkout, "modified": [f"dir{os.sep}"]}
     assert dvc.checkout() == empty_checkout
 
     scm.checkout("-")
-    assert dvc.checkout() == {**empty_checkout, "modified": ["dir" + os.sep]}
+    assert dvc.checkout() == {**empty_checkout, "modified": [f"dir{os.sep}"]}
     assert dvc.checkout() == empty_checkout
 
 
@@ -552,11 +552,11 @@ def test_stats_on_removed_file_from_tracked_dir(tmp_dir, dvc, scm):
     (tmp_dir / "dir" / "subdir" / "file").unlink()
     tmp_dir.dvc_add("dir", commit="removed file from subdir")
     scm.checkout("HEAD~")
-    assert dvc.checkout() == {**empty_checkout, "modified": ["dir" + os.sep]}
+    assert dvc.checkout() == {**empty_checkout, "modified": [f"dir{os.sep}"]}
     assert dvc.checkout() == empty_checkout
 
     scm.checkout("-")
-    assert dvc.checkout() == {**empty_checkout, "modified": ["dir" + os.sep]}
+    assert dvc.checkout() == {**empty_checkout, "modified": [f"dir{os.sep}"]}
     assert dvc.checkout() == empty_checkout
 
 

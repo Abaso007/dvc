@@ -123,9 +123,7 @@ class TabularData(MutableSequence[Sequence["CellT"]]):
             del col[item]
 
     def __len__(self) -> int:
-        if not self._columns:
-            return 0
-        return len(self.columns[0])
+        return len(self.columns[0]) if self._columns else 0
 
     @property
     def shape(self) -> Tuple[int, int]:
@@ -147,7 +145,7 @@ class TabularData(MutableSequence[Sequence["CellT"]]):
 
     def is_empty(self, col_name: str) -> bool:
         col = self.column(col_name)
-        return not any(item != self._fill_value for item in col)
+        return all(item == self._fill_value for item in col)
 
     def to_csv(self) -> str:
         import csv
@@ -223,10 +221,7 @@ class TabularData(MutableSequence[Sequence["CellT"]]):
             raise ValueError(f"Invalid 'how' value {how}. Choose one of ['any', 'all']")
 
         match_line: Set = set()
-        match_any = True
-        if how == "all":
-            match_any = False
-
+        match_any = how != "all"
         for n_row, row in enumerate(self):
             for n_col, col in enumerate(row):
                 if subset and self.keys()[n_col] not in subset:
@@ -239,10 +234,7 @@ class TabularData(MutableSequence[Sequence["CellT"]]):
 
         to_drop = match_line
         if how == "all":
-            if axis == "rows":
-                to_drop = set(range(len(self)))
-            else:
-                to_drop = set(self.keys())
+            to_drop = set(range(len(self))) if axis == "rows" else set(self.keys())
             to_drop -= match_line
 
         if axis == "rows":
@@ -318,9 +310,7 @@ def _format_field(
             return _normalize_float(_val, precision)
         if isinstance(_val, abc.Mapping):
             return {k: _format(v) for k, v in _val.items()}
-        if isinstance(_val, list):
-            return [_format(x) for x in _val]
-        return _val
+        return [_format(x) for x in _val] if isinstance(_val, list) else _val
 
     return str(_format(val))
 
@@ -421,12 +411,10 @@ def metrics_table(
                 if isinstance(metric, dict)
                 else {"": metric}
             )
-            row_data.update(
-                {
-                    k: _format_field(v, precision, round_digits)
-                    for k, v in flattened.items()
-                }
-            )
+            row_data |= {
+                k: _format_field(v, precision, round_digits)
+                for k, v in flattened.items()
+            }
             td.row_from_dict(row_data)
 
     rev, path, *metrics_headers = td.keys()

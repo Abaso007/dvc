@@ -28,9 +28,7 @@ class CmdCheckIgnore(CmdBase):
     def _check_one_file(self, target):
         result = self.ignore_filter.check_ignore(target)
         self._show_results(result)
-        if result.match:
-            return 0
-        return 1
+        return 0 if result.match else 1
 
     def _interactive_mode(self):
         ret = 1
@@ -72,9 +70,7 @@ class CmdCheckIgnore(CmdBase):
 
     def run(self):
         self._check_args()
-        if self.args.stdin:
-            return self._interactive_mode()
-        return self._normal_mode()
+        return self._interactive_mode() if self.args.stdin else self._normal_mode()
 
 
 def add_parser(subparsers, parent_parser):

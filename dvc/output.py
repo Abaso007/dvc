@@ -404,11 +404,7 @@ class Output:
             )
             self.meta.version_id = version_id
 
-        if self.is_in_repo:
-            self.hash_name = "md5"
-        else:
-            self.hash_name = self.fs.PARAM_CHECKSUM
-
+        self.hash_name = "md5" if self.is_in_repo else self.fs.PARAM_CHECKSUM
         self.hash_info = HashInfo(
             name=self.hash_name,
             value=getattr(self.meta, self.hash_name, None),
@@ -421,7 +417,7 @@ class Output:
 
             tree = Tree.from_list(self.files, hash_name=self.hash_name)
             tree.digest(with_meta=True)
-            self.odb = HashFileDB(tree.fs, tree.path + ".odb")
+            self.odb = HashFileDB(tree.fs, f"{tree.path}.odb")
             self.odb.add(tree.path, tree.fs, tree.hash_info.value)
 
             self.hash_info = tree.hash_info
@@ -432,8 +428,7 @@ class Output:
         elif self.meta.nfiles or self.hash_info and self.hash_info.isdir:
             self.meta.isdir = True
             if not self.hash_info and self.hash_name != "md5":
-                md5 = getattr(self.meta, "md5", None)
-                if md5:
+                if md5 := getattr(self.meta, "md5", None):
                     self.hash_info = HashInfo("md5", md5)
 
     def _parse_path(self, fs, fs_path):
@@ -501,10 +496,11 @@ class Output:
 
     @property
     def use_scm_ignore(self):
-        if not self.is_in_repo:
-            return False
-
-        return self.use_cache or self.stage.is_repo_import
+        return (
+            self.use_cache or self.stage.is_repo_import
+            if self.is_in_repo
+            else False
+        )
 
     @property
     def cache(self):
@@ -525,10 +521,7 @@ class Output:
         return hash_info
 
     def _get_hash_meta(self):
-        if self.use_cache:
-            odb = self.cache
-        else:
-            odb = self.repo.cache.local
+        odb = self.cache if self.use_cache else self.repo.cache.local
         _, meta, obj = build(
             odb,
             self.fs_path,
@@ -599,10 +592,7 @@ class Output:
         if self.changed_checksum():
             return {str(self): "modified"}
 
-        if not self.hash_info:
-            return {str(self): "new"}
-
-        return {}
+        return {} if self.hash_info else {str(self): "new"}
 
     def status(self) -> Dict[str, str]:
         if self.hash_info and self.use_cache and self.changed_cache():
@@ -617,9 +607,7 @@ class Output:
 
     @property
     def dvcignore(self) -> Optional["DvcIgnoreFilter"]:
-        if self.fs.protocol == "local":
-            return self.repo.dvcignore
-        return None
+        return self.repo.dvcignore if self.fs.protocol == "local" else None
 
     @property
     def is_empty(self) -> bool:
@@ -785,7 +773,7 @@ class Output:
         if not with_files:
             meta_d = self.meta.to_dict()
             meta_d.pop("isdir", None)
-            ret.update(self.hash_info.to_dict())
+            ret |= self.hash_info.to_dict()
             ret.update(split_file_meta_from_cloud(meta_d))
 
         if self.is_in_repo:
@@ -826,8 +814,7 @@ class Output:
                 ret[self.PARAM_PUSH] = self.can_push
 
         if with_files:
-            obj = self.obj or self.get_obj()
-            if obj:
+            if obj := self.obj or self.get_obj():
                 assert isinstance(obj, Tree)
                 ret[self.PARAM_FILES] = [
                     split_file_meta_from_cloud(f)
@@ -1052,9 +1039,8 @@ class Output:
                 "Would you like to continue? Use '-f' to force."
             )
             if not force and not prompt.confirm(msg.format(self.fs_path)):
-                raise CollectCacheError(  # noqa: B904
-                    "unable to fully collect used cache"
-                    " without cache for directory '{}'".format(self)
+                raise CollectCacheError(
+                    f"unable to fully collect used cache without cache for directory '{self}'"
                 )
             return None
 
@@ -1082,13 +1068,7 @@ class Output:
             return {}
 
         if not self.hash_info:
-            msg = (
-                "Output '{}'({}) is missing version info. "
-                "Cache for it will not be collected. "
-                "Use `dvc repro` to get your pipeline up to date.".format(
-                    self, self.stage
-                )
-            )
+            msg = f"Output '{self}'({self.stage}) is missing version info. Cache for it will not be collected. Use `dvc repro` to get your pipeline up to date."
             if self.exists:
                 msg += (
                     "\n"

@@ -5,10 +5,7 @@ from dvc.exceptions import InvalidArgumentError
 
 
 def to_dict(tasks):
-    status_dict = {}
-    for task in tasks:
-        status_dict[task["name"]] = task["status"]
-    return status_dict
+    return {task["name"]: task["status"] for task in tasks}
 
 
 @pytest.mark.parametrize("follow", [True, False])

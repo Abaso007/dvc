@@ -151,7 +151,7 @@ def test_remote_with_jobs(dvc, base_url, fs_cls):
     assert cls is fs_cls
 
     # config from remote takes priority
-    remote_config.update({"user": "admin"})
+    remote_config["user"] = "admin"
     cls, config, _ = get_cloud_fs(dvc, name="dav")
     assert config["user"] == "admin"
     assert f"{scheme}://{user}@example.com" in config["host"]

@@ -71,7 +71,7 @@ def _adjust_vega_renderers(renderers):
                     vi = dp.pop(VERSION_FIELD, {})
                     keys = list(vi.keys())
                     for key in keys:
-                        if not (len(summary.get(key, set())) > 1):
+                        if len(summary.get(key, set())) <= 1:
                             vi.pop(key)
                     if vi:
                         dp["rev"] = "::".join(vi.values())
@@ -177,8 +177,9 @@ class CmdPlots(CmdBase):
             renderers = [r.renderer for r in renderers_with_errors]
             _adjust_vega_renderers(renderers)
             if self.args.show_vega:
-                renderer = first(filter(lambda r: r.TYPE == "vega", renderers))
-                if renderer:
+                if renderer := first(
+                    filter(lambda r: r.TYPE == "vega", renderers)
+                ):
                     ui.write_json(renderer.get_filled_template(as_string=False))
                 return 0
 
@@ -242,8 +243,7 @@ class CmdPlotsTemplates(CmdBase):
         from dvc_render.vega_templates import TEMPLATES
 
         try:
-            target = self.args.template
-            if target:
+            if target := self.args.template:
                 for template in TEMPLATES:
                     if target == template.DEFAULT_NAME:
                         ui.write_json(template.DEFAULT_CONTENT)
@@ -384,9 +384,7 @@ def _add_props_arguments(parser):
         "--template",
         nargs="?",
         default=None,
-        help="Special JSON or HTML schema file to inject with the data. See {}".format(
-            format_link("https://man.dvc.org/plots#plot-templates")
-        ),
+        help=f'Special JSON or HTML schema file to inject with the data. See {format_link("https://man.dvc.org/plots#plot-templates")}',
         metavar="<path>",
     ).complete = completion.FILE
     parser.add_argument(

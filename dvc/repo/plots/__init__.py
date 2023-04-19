@@ -46,8 +46,7 @@ SUPPORTED_IMAGE_EXTENSIONS = ImageRenderer.EXTENSIONS
 class PlotMetricTypeError(DvcException):
     def __init__(self, file):
         super().__init__(
-            "'{}' - file type error\n"
-            "Only JSON, YAML, CSV and TSV formats are supported.".format(file)
+            f"'{file}' - file type error\nOnly JSON, YAML, CSV and TSV formats are supported."
         )
 
 
@@ -133,14 +132,13 @@ class Plots:
             rev = rev or "workspace"
 
             res: Dict = {}
-            definitions = _collect_definitions(
+            if definitions := _collect_definitions(
                 self.repo,
                 targets=targets,
                 revision=rev,
                 onerror=onerror,
                 props=props,
-            )
-            if definitions:
+            ):
                 res[rev] = {"definitions": definitions}
 
                 data_targets = _get_data_targets(definitions)
@@ -206,10 +204,9 @@ class Plots:
             if rev := getattr(self.repo.fs, "rev", None):
                 short_rev = rev[:7]
             _resolve_data_sources(data, short_rev, cache_remote_stream=True)
-            result.update(data)
+            result |= data
 
-        errored = errored_revisions(result)
-        if errored:
+        if errored := errored_revisions(result):
             from dvc.ui import ui
 
             ui.error_write(
@@ -226,8 +223,7 @@ class Plots:
 
     @staticmethod
     def _unset(out, props):
-        missing = list(set(props) - set(out.plot.keys()))
-        if missing:
+        if missing := list(set(props) - set(out.plot.keys())):
             raise PropsNotFoundError(
                 f"display properties {missing} not found in plot '{out}'"
             )
@@ -239,8 +235,7 @@ class Plots:
         from dvc_render.vega_templates import get_template
 
         props = props or {}
-        template = props.get("template")
-        if template:
+        if template := props.get("template"):
             get_template(template, self.templates_dir)
 
         (out,) = self.repo.find_outs_by_path(path)
@@ -265,9 +260,7 @@ class Plots:
 
     @cached_property
     def templates_dir(self) -> Optional[str]:
-        if self.repo.dvc_dir:
-            return os.path.join(self.repo.dvc_dir, "plots")
-        return None
+        return os.path.join(self.repo.dvc_dir, "plots") if self.repo.dvc_dir else None
 
 
 def _is_plot(out: "Output") -> bool:
@@ -327,11 +320,10 @@ def _collect_plots(
         recursive=recursive,
     )
 
-    result = {
-        repo.dvcfs.from_os_path(plot.fs_path): _plot_props(plot) for plot in plots
-    }
-    result.update({fs_path: {} for fs_path in fs_paths})
-    return result
+    return {
+        repo.dvcfs.from_os_path(plot.fs_path): _plot_props(plot)
+        for plot in plots
+    } | {fs_path: {} for fs_path in fs_paths}
 
 
 def _get_data_targets(definitions: Dict):
@@ -347,16 +339,12 @@ def _get_data_targets(definitions: Dict):
 def infer_data_sources(plot_id, config=None):
     y = config.get("y", None)
 
-    if isinstance(y, dict):
-        sources = list(y.keys())
-    else:
-        sources = [plot_id]
-
+    sources = list(y.keys()) if isinstance(y, dict) else [plot_id]
     x = config.get("x", None)
     if isinstance(x, dict):
         sources.append(first(x.keys()))
 
-    return ldistinct(source for source in sources)
+    return ldistinct(iter(sources))
 
 
 def _matches(targets, config_file, plot_id):
@@ -368,11 +356,12 @@ def _matches(targets, config_file, plot_id):
         return True
 
     full_id = get_plot_id(plot_id, config_file)
-    if any(
-        (re.match(target, plot_id) or re.match(target, full_id)) for target in targets
-    ):
-        return True
-    return False
+    return any(
+        (
+            (re.match(target, plot_id) or re.match(target, full_id))
+            for target in targets
+        )
+    )
 
 
 def _normpath(path):
@@ -426,9 +415,10 @@ def _id_is_path(plot_props=None):
 def _adjust_sources(fs, plot_props, config_dir):
     new_plot_props = deepcopy(plot_props)
     old_y = new_plot_props.pop("y", {})
-    new_y = {}
-    for filepath, val in old_y.items():
-        new_y[_normpath(fs.path.join(config_dir, filepath))] = val
+    new_y = {
+        _normpath(fs.path.join(config_dir, filepath)): val
+        for filepath, val in old_y.items()
+    }
     new_plot_props["y"] = new_y
     return new_plot_props
 
@@ -538,7 +528,7 @@ def unpack_if_dir(fs, path, props: Dict[str, str], onerror: Optional[Callable] =
         for subpath in unpacked["data"]:
             result["data"].update({subpath: props})
     else:
-        result.update(unpacked)
+        result |= unpacked
 
     return dict(result)
 
@@ -572,10 +562,7 @@ def _plot_props(out: "Output") -> Dict:
         raise NotAPlotError(out)
     if isinstance(out.plot, list):
         raise DvcException("Multiple plots per data file not supported.")
-    if isinstance(out.plot, bool):
-        return {}
-
-    return project(out.plot, PLOT_PROPS)
+    return {} if isinstance(out.plot, bool) else project(out.plot, PLOT_PROPS)
 
 
 def _load_sv(content, delimiter=",", header=True):

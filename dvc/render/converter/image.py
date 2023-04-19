@@ -35,9 +35,10 @@ class ImageConverter(Converter):
         return f"data:image;base64,{base64_str}"
 
     def convert(self) -> Tuple[List[Tuple[str, str, Any]], Dict]:
-        datas = []
-        for filename, image_data in self.data.items():
-            datas.append((filename, "", image_data))
+        datas = [
+            (filename, "", image_data)
+            for filename, image_data in self.data.items()
+        ]
         return datas, self.properties
 
     def flat_datapoints(self, revision: str) -> Tuple[List[Dict], Dict]:

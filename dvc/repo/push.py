@@ -37,10 +37,8 @@ def push(  # noqa: C901, PLR0913
         if _remote and (_remote.worktree or _remote.fs.version_aware):
             worktree_remote = _remote
 
-    pushed = 0
     used_run_cache = self.stage_cache.push(remote, odb=odb) if run_cache else []
-    pushed += len(used_run_cache)
-
+    pushed = 0 + len(used_run_cache)
     if isinstance(targets, str):
         targets = [targets]
 

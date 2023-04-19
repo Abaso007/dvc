@@ -51,14 +51,13 @@ class PlotsData:
                 source_file = _normpath(definition_file).replace("\\", "/")
             else:
                 source_file = definition_file
-            file_content = (
+            if file_content := (
                 self.data.get(rev, {})
                 .get("sources", {})
                 .get("data", {})
                 .get(source_file, {})
                 .get("data", {})
-            )
-            if file_content:
+            ):
                 result[definition_file] = file_content
         return result
 

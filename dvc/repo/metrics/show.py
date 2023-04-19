@@ -23,11 +23,11 @@ def _is_metric(out: "Output") -> bool:
 
 
 def _to_fs_paths(metrics: List["Output"]) -> List["str"]:
-    result = []
-    for out in metrics:
-        if out.metric:
-            result.append(out.repo.dvcfs.from_os_path(out.fs_path))
-    return result
+    return [
+        out.repo.dvcfs.from_os_path(out.fs_path)
+        for out in metrics
+        if out.metric
+    ]
 
 
 def _collect_top_level_metrics(repo):
@@ -125,17 +125,17 @@ def show(
     targets = ensure_list(targets)
     targets = [repo.dvcfs.from_os_path(target) for target in targets]
 
-    res = {}
-    for rev in repo.brancher(
-        revs=revs,
-        all_branches=all_branches,
-        all_tags=all_tags,
-        all_commits=all_commits,
-    ):
-        res[rev] = error_handler(_gather_metrics)(
+    res = {
+        rev: error_handler(_gather_metrics)(
             repo, targets, rev, recursive, onerror=onerror
         )
-
+        for rev in repo.brancher(
+            revs=revs,
+            all_branches=all_branches,
+            all_tags=all_tags,
+            all_commits=all_commits,
+        )
+    }
     if hide_workspace:
         # Hide workspace metrics if they are the same as in the active branch
         try:
@@ -148,8 +148,7 @@ def show(
             if res.get("workspace") == res.get(active_branch):
                 res.pop("workspace", None)
 
-    errored = errored_revisions(res)
-    if errored:
+    if errored := errored_revisions(res):
         from dvc.ui import ui
 
         ui.error_write(

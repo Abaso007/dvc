@@ -43,11 +43,10 @@ def _can_hash(stage):
         if not (dep.protocol == "local" and dep.def_path and dep.get_hash()):
             return False
 
-    for out in stage.outs:
-        if out.protocol != "local" or not out.def_path or out.persist:
-            return False
-
-    return True
+    return not any(
+        out.protocol != "local" or not out.def_path or out.persist
+        for out in stage.outs
+    )
 
 
 def _get_stage_hash(stage):
@@ -95,8 +94,7 @@ class StageCache:
             return None
 
         for value in os.listdir(cache_dir):
-            cache = self._load_cache(key, value)
-            if cache:
+            if cache := self._load_cache(key, value):
                 return cache
 
         return None
@@ -221,11 +219,14 @@ class StageCache:
         func = fs.generic.log_exceptions(fs.generic.copy)
         runs = from_fs.path.join(from_odb.path, "runs")
 
-        http_odb = next(
-            (odb for odb in (from_odb, to_odb) if isinstance(odb.fs, HTTPFileSystem)),
+        if http_odb := next(
+            (
+                odb
+                for odb in (from_odb, to_odb)
+                if isinstance(odb.fs, HTTPFileSystem)
+            ),
             None,
-        )
-        if http_odb:
+        ):
             path = http_odb.path
             message = f"run-cache is not supported for http filesystem: {path}"
             raise RunCacheNotSupported(message)

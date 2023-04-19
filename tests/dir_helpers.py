@@ -84,7 +84,7 @@ def run_head(tmp_dir, head_script, dvc):
         return dvc.run(
             **{
                 "cmd": "python {} {}".format(script, " ".join(args)),
-                "outs": [dep + "-1" for dep in args],
+                "outs": [f"{dep}-1" for dep in args],
                 "deps": list(args),
                 **run_kwargs,
             }

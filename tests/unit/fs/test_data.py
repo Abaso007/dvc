@@ -152,9 +152,7 @@ def test_walk(tmp_dir, dvc):
 
     actual = []
     for root, dirs, files in fs.walk("dir"):
-        for entry in dirs + files:
-            actual.append(posixpath.join(root, entry))
-
+        actual.extend(posixpath.join(root, entry) for entry in dirs + files)
     assert set(actual) == set(expected)
     assert len(actual) == len(expected)
 
@@ -186,9 +184,7 @@ def test_walk_dir(tmp_dir, dvc):
 
     actual = []
     for root, dirs, files in fs.walk("dir"):
-        for entry in dirs + files:
-            actual.append(posixpath.join(root, entry))
-
+        actual.extend(posixpath.join(root, entry) for entry in dirs + files)
     assert set(actual) == set(expected)
     assert len(actual) == len(expected)
 

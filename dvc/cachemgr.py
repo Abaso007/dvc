@@ -34,9 +34,7 @@ class CacheManager:
         if repo and repo.local_dvc_dir:
             default = os.path.join(repo.local_dvc_dir, self.CACHE_DIR)
 
-        local = config.get("local")
-
-        if local:
+        if local := config.get("local"):
             settings = {"name": local}
         elif "dir" not in config and not default:
             settings = None

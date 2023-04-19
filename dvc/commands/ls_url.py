@@ -14,8 +14,7 @@ class CmdListUrl(CmdBaseNoRepo):
     def run(self):
         from dvc.repo import Repo
 
-        entries = Repo.ls_url(self.args.url, recursive=self.args.recursive)
-        if entries:
+        if entries := Repo.ls_url(self.args.url, recursive=self.args.recursive):
             entries = _prettify(entries, with_color=True)
             ui.write("\n".join(entries))
         return 0

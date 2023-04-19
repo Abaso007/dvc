@@ -186,9 +186,11 @@ class Index:
 
     @cached_property
     def rev(self) -> Optional[str]:
-        if not isinstance(self.repo.fs, LocalFileSystem):
-            return self.repo.get_rev()[:7]
-        return None
+        return (
+            None
+            if isinstance(self.repo.fs, LocalFileSystem)
+            else self.repo.get_rev()[:7]
+        )
 
     def __repr__(self) -> str:
         rev = self.rev or "workspace"
@@ -210,10 +212,10 @@ class Index:
         for _, idx in collect_files(repo, onerror=onerror):
             # pylint: disable=protected-access
             stages.extend(idx.stages)
-            metrics.update(idx._metrics)
-            plots.update(idx._plots)
-            params.update(idx._params)
-            artifacts.update(idx._artifacts)
+            metrics |= idx._metrics
+            plots |= idx._plots
+            params |= idx._params
+            artifacts |= idx._artifacts
         return cls(
             repo,
             stages=stages,
@@ -362,19 +364,14 @@ class Index:
     @cached_property
     def data(self) -> "Dict[str, DataIndex]":
         prefix: "DataIndexKey"
-        loaded = False
-
         index = self.repo.data_index
         prefix = ("tree", self.data_tree.hash_info.value)
-        if index.has_node(prefix):
-            loaded = True
-
+        loaded = bool(index.has_node(prefix))
         if not loaded:
             _load_data_from_outs(index, prefix, self.outs)
             index.commit()
 
-        by_workspace = {}
-        by_workspace["repo"] = index.view((*prefix, "repo"))
+        by_workspace = {"repo": index.view((*prefix, "repo"))}
         by_workspace["local"] = index.view((*prefix, "local"))
 
         for out in self.outs:

@@ -14,7 +14,7 @@ def ask(prompt: str, limited_to: Optional[Collection[str]] = None):
 
     while True:
         try:
-            answer = input(prompt + " ").lower()
+            answer = input(f"{prompt} ").lower()
         except EOFError:
             return None
 

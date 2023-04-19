@@ -158,8 +158,7 @@ class MachineManager:
 
     def _get_config(self, **kwargs):
         config = self.repo.config
-        name = kwargs.get("name")
-        if name:
+        if name := kwargs.get("name"):
             try:
                 conf = config["machine"][name.lower()]
                 conf["name"] = name

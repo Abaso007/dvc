@@ -79,7 +79,9 @@ def test_downstream(tmp_dir, dvc):
     #    /
     #   B
     #
-    evaluation = dvc.reproduce(PROJECT_FILE + ":B-gen", downstream=True, force=True)
+    evaluation = dvc.reproduce(
+        f"{PROJECT_FILE}:B-gen", downstream=True, force=True
+    )
 
     assert len(evaluation) == 3
     assert isinstance(evaluation[0], PipelineStage)
@@ -95,7 +97,9 @@ def test_downstream(tmp_dir, dvc):
 
     # B, C should be run (in any order) before D
     # See https://github.com/iterative/dvc/issues/3602
-    evaluation = dvc.reproduce(PROJECT_FILE + ":A-gen", downstream=True, force=True)
+    evaluation = dvc.reproduce(
+        f"{PROJECT_FILE}:A-gen", downstream=True, force=True
+    )
 
     assert len(evaluation) == 5
     assert isinstance(evaluation[0], PipelineStage)
@@ -143,12 +147,12 @@ def test_repro_when_new_deps_is_added_in_dvcfile(tmp_dir, dvc, run_copy, copy_sc
 
     tmp_dir.gen({"foo": "foo", "bar": "bar"})
     stage = dvc.run(
-        cmd="python copy.py {} {}".format("foo", "foobar"),
+        cmd='python copy.py foo foobar',
         outs=["foobar"],
         deps=["foo"],
         name="copy-file",
     )
-    target = PROJECT_FILE + ":copy-file"
+    target = f"{PROJECT_FILE}:copy-file"
     assert not dvc.reproduce(target)
 
     dvcfile = load_file(dvc, stage.path)
@@ -164,8 +168,8 @@ def test_repro_when_new_outs_is_added_in_dvcfile(tmp_dir, dvc, copy_script):
 
     tmp_dir.gen({"foo": "foo", "bar": "bar"})
     stage = dvc.run(
-        cmd="python copy.py {} {}".format("foo", "foobar"),
-        outs=[],  # scenario where user forgot to add
+        cmd='python copy.py foo foobar',
+        outs=[],
         deps=["foo"],
         name="copy-file",
     )
@@ -185,7 +189,7 @@ def test_repro_when_new_deps_is_moved(tmp_dir, dvc, copy_script):
 
     tmp_dir.gen({"foo": "foo", "bar": "foo"})
     stage = dvc.run(
-        cmd="python copy.py {} {}".format("foo", "foobar"),
+        cmd='python copy.py foo foobar',
         outs=["foobar"],
         deps=["foo"],
         name="copy-file",
@@ -223,12 +227,12 @@ def test_repro_when_new_out_overlaps_others_stage_outs(tmp_dir, dvc):
         {
             "stages": {
                 "run-copy": {
-                    "cmd": "python copy {} {}".format("foo", "dir/foo"),
+                    "cmd": 'python copy foo dir/foo',
                     "deps": ["foo"],
                     "outs": ["dir/foo"],
                 }
             }
-        },
+        }
     )
     with pytest.raises(OverlappingOutputPathsError):
         dvc.reproduce(":run-copy")
@@ -240,12 +244,12 @@ def test_repro_when_new_deps_added_does_not_exist(tmp_dir, dvc, copy_script):
         {
             "stages": {
                 "run-copy": {
-                    "cmd": "python copy.py {} {}".format("foo", "foobar"),
+                    "cmd": 'python copy.py foo foobar',
                     "deps": ["foo", "bar"],
                     "outs": ["foobar"],
                 }
             }
-        },
+        }
     )
     with pytest.raises(ReproductionError):
         dvc.reproduce(":run-copy")
@@ -257,12 +261,12 @@ def test_repro_when_new_outs_added_does_not_exist(tmp_dir, dvc, copy_script):
         {
             "stages": {
                 "run-copy": {
-                    "cmd": "python copy.py {} {}".format("foo", "foobar"),
+                    "cmd": 'python copy.py foo foobar',
                     "deps": ["foo"],
                     "outs": ["foobar", "bar"],
                 }
             }
-        },
+        }
     )
     with pytest.raises(ReproductionError):
         dvc.reproduce(":run-copy")
@@ -274,12 +278,12 @@ def test_repro_when_lockfile_gets_deleted(tmp_dir, dvc, copy_script):
         {
             "stages": {
                 "run-copy": {
-                    "cmd": "python copy.py {} {}".format("foo", "foobar"),
+                    "cmd": 'python copy.py foo foobar',
                     "deps": ["foo"],
                     "outs": ["foobar"],
                 }
             }
-        },
+        }
     )
     assert dvc.reproduce(":run-copy")
     assert os.path.exists(LOCK_FILE)

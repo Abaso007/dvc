@@ -82,9 +82,7 @@ class Prompt(RichInputMixin, rich.prompt.Prompt):
         value = cls.ask(
             *args, allow_omission=allow_omission, validator=validator, **kwargs
         )
-        if allow_omission and value == cls.omit_value:
-            return None
-        return value
+        return None if allow_omission and value == cls.omit_value else value
 
     def __call__(
         self,
@@ -107,22 +105,19 @@ class Prompt(RichInputMixin, rich.prompt.Prompt):
                 self.on_validate_error(value, exc)
                 continue
             else:
-                if isinstance(validated, tuple):
-                    value, message = validated
-                else:
-                    value, message = validated, ""
+                value, message = validated if isinstance(validated, tuple) else (validated, "")
                 if message:
                     self.console.print(message)
             return value
 
     def process_response(self, value: str) -> str:
         """Disallow empty values."""
-        ret = super().process_response(value)
-        if not ret:
+        if ret := super().process_response(value):
+            return ret
+        else:
             raise InvalidResponse(
                 "[prompt.invalid]Response required. Please try again."
             )
-        return ret
 
     def render_default(self, default):
         from rich.text import Text

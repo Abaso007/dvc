@@ -14,16 +14,16 @@ NAME_REGEX = r"^(?P<remote>remote\.)?(?P<section>[^\.]*)\.(?P<option>[^\.]*)$"
 def _name_type(value):
     import re
 
-    match = re.match(NAME_REGEX, value)
-    if not match:
+    if match := re.match(NAME_REGEX, value):
+        return (
+            bool(match.group("remote")),
+            match.group("section").lower(),
+            match.group("option").lower(),
+        )
+    else:
         raise argparse.ArgumentTypeError(
             "name argument should look like remote.name.option or section.option"
         )
-    return (
-        bool(match.group("remote")),
-        match.group("section").lower(),
-        match.group("option").lower(),
-    )
 
 
 class CmdConfig(CmdBaseNoRepo):
@@ -69,8 +69,7 @@ class CmdConfig(CmdBaseNoRepo):
         for level in levels:
             conf = self.config.read(level)
             prefix = self._config_file_prefix(self.args.show_origin, self.config, level)
-            configs = list(self._format_config(conf, prefix))
-            if configs:
+            if configs := list(self._format_config(conf, prefix)):
                 ui.write("\n".join(configs))
 
         return 0

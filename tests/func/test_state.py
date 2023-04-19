@@ -62,7 +62,7 @@ def test_get_unused_links(tmp_dir, dvc):
     links = [os.path.join(dvc.root_dir, link) for link in ["foo", "bar"]]
     assert set(dvc.state.get_unused_links([], dvc.fs)) == {"foo", "bar"}
     assert set(dvc.state.get_unused_links(links[:1], dvc.fs)) == {"bar"}
-    assert set(dvc.state.get_unused_links(links, dvc.fs)) == set()
+    assert not set(dvc.state.get_unused_links(links, dvc.fs))
     assert set(
         dvc.state.get_unused_links(
             (links[:1] + [os.path.join(dvc.root_dir, "not-existing-file")]),

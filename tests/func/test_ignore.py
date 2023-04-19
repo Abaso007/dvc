@@ -429,7 +429,7 @@ def test_ignore_in_added_dir(tmp_dir, dvc):
 
     ignored_path = tmp_dir / "dir" / "sub" / "ignored"
     result = dvc.dvcignore.find(dvc.fs, ignored_path)
-    assert set(result) == set()
+    assert not set(result)
     assert ignored_path.exists()
 
     dvc.add("dir")

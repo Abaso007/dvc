@@ -36,21 +36,20 @@ def supported_cache_type(types):
     if isinstance(types, str):
         types = [typ.strip() for typ in types.split(",")]
 
-    unsupported = set(types) - {"reflink", "hardlink", "symlink", "copy"}
-    if unsupported:
-        raise Invalid("Unsupported cache type(s): {}".format(", ".join(unsupported)))
+    if unsupported := set(types) - {"reflink", "hardlink", "symlink", "copy"}:
+        raise Invalid(f'Unsupported cache type(s): {", ".join(unsupported)}')
 
     return types
 
 
-def Choices(*choices):  # noqa: N802
+def Choices(*choices):    # noqa: N802
     """Checks that value belongs to the specified set of values
 
     Args:
         *choices: pass allowed values as arguments, or pass a list or
             tuple as a single argument
     """
-    return Any(*choices, msg="expected one of {}".format(", ".join(choices)))
+    return Any(*choices, msg=f'expected one of {", ".join(choices)}')
 
 
 def ByUrl(mapping):  # noqa: N802
@@ -93,8 +92,7 @@ class FeatureSchema(Schema):
 
     def __call__(self, data):
         ret = super().__call__(data)
-        extra_keys = data.keys() - ret.keys()
-        if extra_keys:
+        if extra_keys := data.keys() - ret.keys():
             self._log_deprecated(sorted(extra_keys))
         return ret
 
@@ -168,7 +166,7 @@ SCHEMA = {
     "remote": {
         str: ByUrl(
             {
-                "": {**LOCAL_COMMON, **REMOTE_COMMON},
+                "": LOCAL_COMMON | REMOTE_COMMON,
                 "s3": {
                     "region": str,
                     "profile": str,
@@ -266,11 +264,11 @@ SCHEMA = {
                     Optional("verify", default=True): Bool,
                     **REMOTE_COMMON,
                 },
-                "http": {**HTTP_COMMON, **REMOTE_COMMON},
-                "https": {**HTTP_COMMON, **REMOTE_COMMON},
-                "webdav": {**WEBDAV_COMMON, **REMOTE_COMMON},
-                "webdavs": {**WEBDAV_COMMON, **REMOTE_COMMON},
-                "remote": {str: object},  # Any of the above options are valid
+                "http": HTTP_COMMON | REMOTE_COMMON,
+                "https": HTTP_COMMON | REMOTE_COMMON,
+                "webdav": WEBDAV_COMMON | REMOTE_COMMON,
+                "webdavs": WEBDAV_COMMON | REMOTE_COMMON,
+                "remote": {str: object},
             }
         )
     },
@@ -285,7 +283,9 @@ SCHEMA = {
     "machine": {
         str: {
             "cloud": All(Lower, Choices("aws", "azure")),
-            "region": All(Lower, Choices("us-west", "us-east", "eu-west", "eu-north")),
+            "region": All(
+                Lower, Choices("us-west", "us-east", "eu-west", "eu-north")
+            ),
             "image": str,
             "spot": Bool,
             "spot_price": Coerce(float),
@@ -297,8 +297,6 @@ SCHEMA = {
             "setup_script": str,
         },
     },
-    # section for experimental features
-    # only specified keys are validated, others get logged and then ignored/removed
     "feature": FeatureSchema(
         {
             Optional("machine", default=False): Bool,

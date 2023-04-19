@@ -390,9 +390,7 @@ class BaseStashQueue(ABC):
                                 if len(names) > 3:
                                     names[3:] = [f"... ({len(names) - 3} more)"]
                                 err_msg.append(
-                                    "To resume an experiment containing this "
-                                    "checkpoint, apply one of these heads:\n"
-                                    "\t{}".format(", ".join(names))
+                                    f'To resume an experiment containing this checkpoint, apply one of these heads:\n\t{", ".join(names)}'
                                 )
                             raise DvcException("".join(err_msg))
                         else:
@@ -464,10 +462,7 @@ class BaseStashQueue(ABC):
         )
 
     def _stash_commit_deps(self, *args, **kwargs):
-        if len(args):
-            targets = args[0]
-        else:
-            targets = kwargs.get("targets")
+        targets = args[0] if len(args) else kwargs.get("targets")
         if isinstance(targets, str):
             targets = [targets]
         elif not targets:
@@ -493,9 +488,7 @@ class BaseStashQueue(ABC):
         if not baseline_rev:
             baseline_rev = rev
         msg = ExpStash.format_message(rev, baseline_rev, name)
-        if branch:
-            return f"{msg}:{branch}"
-        return msg
+        return f"{msg}:{branch}" if branch else msg
 
     def _pack_args(self, *args, **kwargs) -> None:
         import pickle  # nosec B403

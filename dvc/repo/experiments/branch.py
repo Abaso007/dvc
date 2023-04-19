@@ -33,14 +33,10 @@ def branch(repo, exp_rev, branch_name=None, **kwargs):
                 break
         if not ref_info:
             msg = [
-                (
-                    f"Ambiguous experiment name '{exp_rev}' can refer to "
-                    "multiple experiments. To create a branch use a full "
-                    "experiment ref:"
-                ),
+                f"Ambiguous experiment name '{exp_rev}' can refer to multiple experiments. To create a branch use a full experiment ref:",
                 "",
+                *[str(info) for info in ref_infos],
             ]
-            msg.extend([str(info) for info in ref_infos])
             raise InvalidArgumentError("\n".join(msg))
 
     if not ref_info:

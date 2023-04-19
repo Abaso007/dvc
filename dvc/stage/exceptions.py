@@ -81,7 +81,7 @@ class MissingDataSource(DvcException):
         if len(missing_files) > 1:
             source += "s"
 
-        msg = "missing data '{}': {}".format(source, ", ".join(missing_files))
+        msg = f"""missing data '{source}': {", ".join(missing_files)}"""
         super().__init__(msg)
 
 
@@ -105,8 +105,7 @@ class StageNotFound(DvcException, KeyError):
 class StageNameUnspecified(DvcException):
     def __init__(self, file):
         super().__init__(
-            "Stage name not provided."
-            "Please specify the name as: `{}:stage_name`".format(file.relpath)
+            f"Stage name not provided.Please specify the name as: `{file.relpath}:stage_name`"
         )
 
 

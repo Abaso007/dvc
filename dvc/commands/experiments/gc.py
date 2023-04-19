@@ -27,9 +27,10 @@ class CmdExperimentsGC(CmdBase):
             workspace=self.args.workspace,
         )
 
-        msg = "This will remove all experiments except those derived from "
-
-        msg += "the workspace"
+        msg = (
+            "This will remove all experiments except those derived from "
+            + "the workspace"
+        )
         if self.args.all_commits:
             msg += " and all git commits"
         else:
@@ -55,16 +56,14 @@ class CmdExperimentsGC(CmdBase):
         if not self.args.force and not ui.confirm(msg):
             return 1
 
-        removed = self.repo.experiments.gc(
+        if removed := self.repo.experiments.gc(
             all_branches=self.args.all_branches,
             all_tags=self.args.all_tags,
             all_commits=self.args.all_commits,
             workspace=self.args.workspace,
             commit_date=self.args.commit_date,
             queued=self.args.queued,
-        )
-
-        if removed:
+        ):
             ui.write(
                 f"Removed {removed} experiments.",
                 "To remove unused cache files",

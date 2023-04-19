@@ -66,7 +66,7 @@ def _get_flags(out):
 
 def _serialize_out(out):
     flags = _get_flags(out)
-    return out.def_path if not flags else {out.def_path: flags}
+    return {out.def_path: flags} if flags else out.def_path
 
 
 @no_type_check

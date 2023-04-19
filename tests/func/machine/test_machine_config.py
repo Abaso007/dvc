@@ -29,7 +29,7 @@ def test_machine_modify_susccess(tmp_dir, dvc, machine_config, slot, value):
     assert main(["machine", "modify", "foo", slot, value]) == 0
     assert (
         tmp_dir / ".dvc" / "config"
-    ).read_text() == machine_config + f"    {slot} = {value}\n"
+    ).read_text() == f"{machine_config}    {slot} = {value}\n"
     assert main(["machine", "modify", "--unset", "foo", slot]) == 0
     assert (tmp_dir / ".dvc" / "config").read_text() == machine_config
 
@@ -39,7 +39,7 @@ def test_machine_modify_startup_script(tmp_dir, dvc, machine_config):
     assert main(["machine", "modify", "foo", slot, value]) == 0
     assert (
         tmp_dir / ".dvc" / "config"
-    ).read_text() == machine_config + f"    {slot} = ../{value}\n"
+    ).read_text() == f"{machine_config}    {slot} = ../{value}\n"
     assert main(["machine", "modify", "--unset", "foo", slot]) == 0
     assert (tmp_dir / ".dvc" / "config").read_text() == machine_config
 

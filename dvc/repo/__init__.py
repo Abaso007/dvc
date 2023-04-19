@@ -258,10 +258,7 @@ class Repo:
             *relparts,
             self.DVC_DIR,
         )
-        if os.path.exists(dvc_dir):
-            return dvc_dir
-
-        return None
+        return dvc_dir if os.path.exists(dvc_dir) else None
 
     @cached_property
     def tmp_dir(self):
@@ -531,10 +528,7 @@ class Repo:
             if out.protocol == "local" and match(fs_path, out.fs_path):
                 return True
 
-            if recursive and out.fs.path.isin(out.fs_path, fs_path):
-                return True
-
-            return False
+            return bool(recursive and out.fs.path.isin(out.fs_path, fs_path))
 
         matched = list(filter(func, outs))
         if not matched:

@@ -20,7 +20,7 @@ class CmdExperimentsPull(CmdBase):
     def run(self):
         self.raise_error_if_all_disabled()
 
-        pulled_exps = self.repo.experiments.pull(
+        if pulled_exps := self.repo.experiments.pull(
             self.args.git_remote,
             self.args.experiment,
             all_commits=self.args.all_commits,
@@ -31,9 +31,7 @@ class CmdExperimentsPull(CmdBase):
             dvc_remote=self.args.dvc_remote,
             jobs=self.args.jobs,
             run_cache=self.args.run_cache,
-        )
-
-        if pulled_exps:
+        ):
             ui.write(
                 f"Pulled experiment '{pulled_exps}'",
                 f"from Git remote '{self.args.git_remote}'.",

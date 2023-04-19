@@ -150,8 +150,7 @@ class Tqdm(tqdm):
             )
             + 1
         )
-        ncols_left = max(ncols_left, 0)
-        if ncols_left:
+        if ncols_left := max(ncols_left, 0):
             d["ncols_desc"] = d["ncols_info"] = ncols_left
         else:
             # work-around for zero-width description

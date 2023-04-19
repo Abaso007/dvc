@@ -187,12 +187,12 @@ def _fetch_worktree(
 ) -> int:
     from dvc.repo.worktree import fetch_worktree
 
-    downloaded = 0
-    for _ in repo.brancher(
-        revs=revs,
-        all_branches=all_branches,
-        all_tags=all_tags,
-        all_commits=all_commits,
-    ):
-        downloaded += fetch_worktree(repo, remote, targets=targets, jobs=jobs, **kwargs)
-    return downloaded
+    return sum(
+        fetch_worktree(repo, remote, targets=targets, jobs=jobs, **kwargs)
+        for _ in repo.brancher(
+            revs=revs,
+            all_branches=all_branches,
+            all_tags=all_tags,
+            all_commits=all_commits,
+        )
+    )

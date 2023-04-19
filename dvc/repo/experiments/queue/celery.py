@@ -325,8 +325,7 @@ class LocalCeleryQueue(BaseStashQueue):
         running_task_ids: Set[str] = set()
         active_workers = self.worker_status()
         for _, tasks in active_workers.items():
-            task = first(tasks)
-            if task:
+            if task := first(tasks):
                 running_task_ids.add(task["id"])
         return running_task_ids
 
@@ -376,11 +375,7 @@ class LocalCeleryQueue(BaseStashQueue):
             "Found active tasks: '%s' to kill",
             list(entries.values()),
         )
-        inactive_entries: Dict[QueueEntry, str] = self._try_to_kill_tasks(
-            entries, force
-        )
-
-        if inactive_entries:
+        if inactive_entries := self._try_to_kill_tasks(entries, force):
             self._mark_inactive_tasks_failure(inactive_entries)
 
     def kill(self, revs: Collection[str], force: bool = False) -> None:
@@ -405,10 +400,10 @@ class LocalCeleryQueue(BaseStashQueue):
     def shutdown(self, kill: bool = False):
         self.celery.control.shutdown()
         if kill:
-            to_kill: Dict[QueueEntry, str] = {}
-            for entry in self.iter_active():
-                to_kill[entry] = entry.name or entry.stash_rev
-            if to_kill:
+            if to_kill := {
+                entry: entry.name or entry.stash_rev
+                for entry in self.iter_active()
+            }:
                 self._kill_entries(to_kill, True)
 
     def follow(
@@ -480,9 +475,7 @@ class LocalCeleryQueue(BaseStashQueue):
         """
         result: Dict[str, Dict] = {}
         for entry in self.iter_active():
-            result.update(
-                fetch_running_exp_from_temp_dir(self, entry.stash_rev, fetch_refs)
-            )
+            result |= fetch_running_exp_from_temp_dir(self, entry.stash_rev, fetch_refs)
         return result
 
     def get_ref_and_entry_by_names(

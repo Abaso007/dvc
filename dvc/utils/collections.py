@@ -55,9 +55,7 @@ def to_omegaconf(item):
     """
     if isinstance(item, dict):
         return {k: to_omegaconf(v) for k, v in item.items()}
-    if isinstance(item, list):
-        return [to_omegaconf(x) for x in item]
-    return item
+    return [to_omegaconf(x) for x in item] if isinstance(item, list) else item
 
 
 def remove_missing_keys(src, to_update):
@@ -97,9 +95,7 @@ def merge_dicts(src: Dict, to_update: Dict) -> Dict:
 def ensure_list(item: Union[Iterable[str], str, None]) -> List[str]:
     if item is None:
         return []
-    if isinstance(item, str):
-        return [item]
-    return list(item)
+    return [item] if isinstance(item, str) else list(item)
 
 
 _KT = TypeVar("_KT")

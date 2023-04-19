@@ -35,14 +35,12 @@ class CmdRun(CmdBase):
             return 1
 
         kwargs = vars(self.args)
-        kwargs.update(
-            {
-                "cmd": parse_cmd(self.args.command),
-                "fname": kwargs.pop("file"),
-                "no_exec": self.args.no_exec or bool(self.args.checkpoints),
-                "run_cache": not kwargs.pop("no_run_cache"),
-            }
-        )
+        kwargs |= {
+            "cmd": parse_cmd(self.args.command),
+            "fname": kwargs.pop("file"),
+            "no_exec": self.args.no_exec or bool(self.args.checkpoints),
+            "run_cache": not kwargs.pop("no_run_cache"),
+        }
         try:
             self.repo.run(**kwargs)
         except DvcException:

@@ -156,7 +156,7 @@ def test_import_file_from_dir_to_dir(tmp_dir, scm, dvc, erepo_dir):
 
 def test_import_non_cached(erepo_dir, tmp_dir, dvc, scm):
     src = "non_cached_output"
-    dst = src + "_imported"
+    dst = f"{src}_imported"
 
     with erepo_dir.chdir():
         erepo_dir.dvc.run(

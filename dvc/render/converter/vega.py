@@ -45,10 +45,14 @@ def _find(
     field: str,
     data_series: List[Tuple[str, str, Any]],
 ):
-    for data_file, data_field, data in data_series:
-        if data_file == filename and data_field == field:
-            return data_file, data_field, data
-    return None
+    return next(
+        (
+            (data_file, data_field, data)
+            for data_file, data_field, data in data_series
+            if data_file == filename and data_field == field
+        ),
+        None,
+    )
 
 
 def _verify_field(file2datapoints: Dict[str, List], filename: str, field: str):
@@ -154,11 +158,7 @@ class VegaConverter(Converter):
             self.inferred_properties["y"] = {self.plot_id: y}
 
     def _find_datapoints(self):
-        result = {}
-        for file, content in self.data.items():
-            result[file] = get_datapoints(content)
-
-        return result
+        return {file: get_datapoints(content) for file, content in self.data.items()}
 
     @staticmethod
     def infer_y_label(properties):
@@ -174,9 +174,7 @@ class VegaConverter(Converter):
             return
 
         fields = {field for _, field in _file_field(y)}
-        if len(fields) == 1:
-            return first(fields)
-        return "y"
+        return first(fields) if len(fields) == 1 else "y"
 
     @staticmethod
     def infer_x_label(properties):
@@ -189,27 +187,16 @@ class VegaConverter(Converter):
             return INDEX_FIELD
 
         fields = {field for _, field in _file_field(x)}
-        if len(fields) == 1:
-            return first(fields)
-        return "x"
+        return first(fields) if len(fields) == 1 else "x"
 
     def flat_datapoints(self, revision):  # noqa: C901, PLR0912
         file2datapoints, properties = self.convert()
 
-        props_update = {}
-
         xs = list(_get_xs(properties, file2datapoints))
 
         # assign "step" if no x provided
-        if not xs:
-            x_file, x_field = (
-                None,
-                INDEX_FIELD,
-            )
-        else:
-            x_file, x_field = xs[0]
-        props_update["x"] = x_field
-
+        x_file, x_field = xs[0] if xs else (None, INDEX_FIELD)
+        props_update = {"x": x_field}
         ys = list(_get_ys(properties, file2datapoints))
 
         num_xs = len(xs)

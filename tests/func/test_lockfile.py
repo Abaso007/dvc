@@ -57,7 +57,7 @@ def test_deps_outs_are_sorted_by_path(tmp_dir, dvc, run_head):
 
     # outs are too
     assert list(map(itemgetter("path"), lock["outs"])) == [
-        d + "-1" for d in sorted(deps)
+        f"{d}-1" for d in sorted(deps)
     ]
 
 

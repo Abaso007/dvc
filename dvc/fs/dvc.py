@@ -53,9 +53,7 @@ def _merge_info(repo, fs_info, dvc_info):
     if fs_info:
         ret["type"] = fs_info["type"]
         ret["size"] = fs_info["size"]
-        isexec = False
-        if fs_info["type"] == "file":
-            isexec = utils.is_exec(fs_info["mode"])
+        isexec = utils.is_exec(fs_info["mode"]) if fs_info["type"] == "file" else False
         ret["isexec"] = isexec
 
     return ret
@@ -155,15 +153,11 @@ class _DVCFileSystem(AbstractFileSystem):  # pylint:disable=abstract-method
 
     def _get_key(self, path: "StrPath") -> Key:
         parts = self.repo.fs.path.relparts(path, self.repo.root_dir)
-        if parts == (os.curdir,):
-            return ()
-        return parts
+        return () if parts == (os.curdir,) else parts
 
     def _get_key_from_relative(self, path) -> Key:
         parts = self.path.relparts(path, self.root_marker)
-        if parts and parts[0] == os.curdir:
-            return parts[1:]
-        return parts
+        return parts[1:] if parts and parts[0] == os.curdir else parts
 
     def _from_key(self, parts: Key) -> str:
         return self.repo.fs.path.join(self.repo.root_dir, *parts)
@@ -289,14 +283,11 @@ class _DVCFileSystem(AbstractFileSystem):  # pylint:disable=abstract-method
         if not dvc_only:
             fs = self.repo.fs
             fs_path = self._from_key(key)
-            try:
+            with suppress(FileNotFoundError, NotADirectoryError):
                 for info in repo.dvcignore.ls(
                     fs, fs_path, detail=True, ignore_subrepos=ignore_subrepos
                 ):
                     fs_infos[fs.path.name(info["name"])] = info
-            except (FileNotFoundError, NotADirectoryError):
-                pass
-
             fs_exists = bool(fs_infos) or fs.exists(fs_path)
 
         dvcfiles = kwargs.get("dvcfiles", False)
@@ -319,10 +310,7 @@ class _DVCFileSystem(AbstractFileSystem):  # pylint:disable=abstract-method
             infos.append(info)
             paths.append(entry_path)
 
-        if not detail:
-            return paths
-
-        return infos
+        return infos if detail else paths
 
     def info(self, path, **kwargs):
         key = self._get_key_from_relative(path)
@@ -336,13 +324,10 @@ class _DVCFileSystem(AbstractFileSystem):  # pylint:disable=abstract-method
 
         dvc_info = None
         if dvc_fs:
-            try:
+            with suppress(FileNotFoundError):
                 dvc_info = dvc_fs.fs.index.info(subkey)
                 dvc_path = _get_dvc_path(dvc_fs, subkey)
                 dvc_info["name"] = dvc_path
-            except FileNotFoundError:
-                pass
-
         fs_info = None
         fs = self.repo.fs
         fs_path = self._from_key(key)

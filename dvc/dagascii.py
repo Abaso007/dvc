@@ -54,7 +54,7 @@ class AsciiCanvas:
         self.cols = cols
         self.lines = lines
 
-        self.canvas = [[" "] * cols for line in range(lines)]
+        self.canvas = [[" "] * cols for _ in range(lines)]
 
     def draw(self):
         """Draws ASCII canvas on the screen."""
@@ -80,7 +80,7 @@ class AsciiCanvas:
 
         self.canvas[y][x] = char
 
-    def line(self, x0, y0, x1, y1, char):  # noqa: C901, PLR0912
+    def line(self, x0, y0, x1, y1, char):    # noqa: C901, PLR0912
         """Create a line on ASCII canvas.
 
         Args:
@@ -102,24 +102,15 @@ class AsciiCanvas:
             self.point(x0, y0, char)
         elif abs(dx) >= abs(dy):
             for x in range(x0, x1 + 1):
-                if dx == 0:
-                    y = y0
-                else:
-                    y = y0 + int(round((x - x0) * dy / float(dx)))
+                y = y0 if dx == 0 else y0 + int(round((x - x0) * dy / float(dx)))
                 self.point(x, y, char)
         elif y0 < y1:
             for y in range(y0, y1 + 1):
-                if dy == 0:
-                    x = x0
-                else:
-                    x = x0 + int(round((y - y0) * dx / float(dy)))
+                x = x0 if dy == 0 else x0 + int(round((y - y0) * dx / float(dy)))
                 self.point(x, y, char)
         else:
             for y in range(y1, y0 + 1):
-                if dy == 0:
-                    x = x0
-                else:
-                    x = x1 + int(round((y - y1) * dx / float(dy)))
+                x = x0 if dy == 0 else x1 + int(round((y - y1) * dx / float(dy)))
                 self.point(x, y, char)
 
     def text(self, x, y, text):
@@ -219,12 +210,13 @@ def draw(vertices, edges):
     sug = _build_sugiyama_layout(vertices, edges)
 
     for vertex in sug.g.sV:
-        # NOTE: moving boxes w/2 to the left
-        Xs.append(vertex.view.xy[0] - vertex.view.w / 2.0)
-        Xs.append(vertex.view.xy[0] + vertex.view.w / 2.0)
-        Ys.append(vertex.view.xy[1])
-        Ys.append(vertex.view.xy[1] + vertex.view.h)
-
+        Xs.extend(
+            (
+                vertex.view.xy[0] - vertex.view.w / 2.0,
+                vertex.view.xy[0] + vertex.view.w / 2.0,
+            )
+        )
+        Ys.extend((vertex.view.xy[1], vertex.view.xy[1] + vertex.view.h))
     for edge in sug.g.sE:
         for x, y in edge.view._pts:  # pylint: disable=protected-access
             Xs.append(x)

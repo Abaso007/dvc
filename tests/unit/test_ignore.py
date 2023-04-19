@@ -196,11 +196,7 @@ def test_should_ignore_dir(omit_dir, sub_dir):
     dirs = [omit_dir, "dir1", "dir2"]
     files = [omit_dir, "file1", "file2"]
 
-    if sub_dir:
-        current = os.path.join(root, sub_dir)
-    else:
-        current = root
-
+    current = os.path.join(root, sub_dir) if sub_dir else root
     new_dirs, new_files = ignore(current, dirs, files)
 
     assert set(new_dirs) == {"dir1", "dir2"}

@@ -33,7 +33,6 @@ class LOCKFILE_VERSION(VersionEnum):  # noqa: N801
         if not data or not isinstance(data, Mapping):
             return cls(cls.V2)
 
-        version = data.get(SCHEMA_KWD)
-        if version:
+        if version := data.get(SCHEMA_KWD):
             return cls(version if version in cls.all_versions() else cls.V2)
         return cls(cls.V1)

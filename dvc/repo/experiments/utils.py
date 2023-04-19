@@ -167,9 +167,9 @@ def push_refspec(
         results = scm.push_refspecs(
             url, refspecs, force=force, on_diverged=on_diverged, **kwargs
         )
-        diverged = [ref for ref in results if results[ref] == SyncStatus.DIVERGED]
-
-        if diverged:
+        if diverged := [
+            ref for ref in results if results[ref] == SyncStatus.DIVERGED
+        ]:
             raise SCMError(f"local ref '{diverged}' diverged from remote '{url}'")
     except AuthError as exc:
         raise GitAuthError(str(exc))  # noqa: B904

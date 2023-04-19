@@ -73,13 +73,10 @@ class AmbiguousExpRefInfo(InvalidArgumentError):
         exp_ref_list: Iterable["ExpRefInfo"],
     ):
         msg = [
-            (
-                f"Ambiguous name '{exp_name}' refers to multiple experiments."
-                " Use one of the following full refnames instead:"
-            ),
+            f"Ambiguous name '{exp_name}' refers to multiple experiments. Use one of the following full refnames instead:",
             "",
+            *[f"\t{info}" for info in exp_ref_list],
         ]
-        msg.extend([f"\t{info}" for info in exp_ref_list])
         super().__init__("\n".join(msg))
 
 
@@ -93,15 +90,15 @@ class UnresolvedExpNamesError(InvalidArgumentError):
         git_remote: Optional[str] = None,
     ):
         unresolved_names = "; ".join(unresolved_list)
-        if not git_remote:
-            if len(unresolved_list) > 1:
-                super().__init__(f"'{unresolved_names}' are not valid {self.NAME}s")
-            else:
-                super().__init__(f"'{unresolved_names}' is not a valid {self.NAME}")
-        else:
+        if git_remote:
             super().__init__(
                 f"Experiment '{unresolved_names}' does not exist in '{git_remote}'"
             )
+
+        elif len(unresolved_list) > 1:
+            super().__init__(f"'{unresolved_names}' are not valid {self.NAME}s")
+        else:
+            super().__init__(f"'{unresolved_names}' is not a valid {self.NAME}")
 
 
 class UnresolvedQueueExpNamesError(UnresolvedExpNamesError):

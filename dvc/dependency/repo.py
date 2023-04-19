@@ -46,10 +46,7 @@ class RepoDependency(Dependency):
         current = self._make_fs(locked=True).repo.get_rev()
         updated = self._make_fs(locked=False).repo.get_rev()
 
-        if current != updated:
-            return {str(self): "update available"}
-
-        return {}
+        return {str(self): "update available"} if current != updated else {}
 
     def status(self):
         return self.workspace_status()

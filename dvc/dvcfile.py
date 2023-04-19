@@ -45,9 +45,7 @@ LOCK_FILE = "dvc.lock"
 class FileIsGitIgnored(DvcException):
     def __init__(self, path, pipeline_file=False):
         super().__init__(
-            "{}'{}' is git-ignored.".format(
-                "bad DVC file name " if pipeline_file else "", path
-            )
+            f"""{"bad DVC file name " if pipeline_file else ""}'{path}' is git-ignored."""
         )
 
 
@@ -83,10 +81,7 @@ def is_git_ignored(repo, path):
 def check_dvcfile_path(repo, path):
     if not is_valid_filename(path):
         raise StageFileBadNameError(
-            "bad DVC file name '{}'. DVC files should be named "
-            "'{}' or have a '.dvc' suffix (e.g. '{}.dvc').".format(
-                relpath(path), PROJECT_FILE, os.path.basename(path)
-            )
+            f"bad DVC file name '{relpath(path)}'. DVC files should be named '{PROJECT_FILE}' or have a '.dvc' suffix (e.g. '{os.path.basename(path)}.dvc')."
         )
 
     if is_git_ignored(repo, path):
@@ -102,9 +97,7 @@ class FileMixin:
         self.verify = verify
 
     def __repr__(self):
-        return "{}: {}".format(
-            self.__class__.__name__, relpath(self.path, self.repo.root_dir)
-        )
+        return f"{self.__class__.__name__}: {relpath(self.path, self.repo.root_dir)}"
 
     def __hash__(self):
         return hash(self.path)
@@ -236,7 +229,7 @@ class ProjectFile(FileMixin):
 
     @property
     def _lockfile(self):
-        return Lockfile(self.repo, os.path.splitext(self.path)[0] + ".lock")
+        return Lockfile(self.repo, f"{os.path.splitext(self.path)[0]}.lock")
 
     def _reset(self):
         self.__dict__.pop("contents", None)

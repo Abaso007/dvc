@@ -21,7 +21,7 @@ def run(
     force: bool = True,
     **kwargs,
 ) -> Union["Stage", "PipelineStage"]:
-    kwargs.update({"force": force, "params": parse_params(kwargs.get("params", []))})
+    kwargs |= {"force": force, "params": parse_params(kwargs.get("params", []))}
     stage = self.stage.create(**kwargs)
 
     if no_exec:

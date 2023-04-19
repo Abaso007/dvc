@@ -166,10 +166,7 @@ class Console:
         soft_wrap: Optional[bool] = None,
         new_line_start: bool = False,
     ) -> None:
-        if stderr:
-            console = self.error_console
-        else:
-            console = self.rich_console
+        console = self.error_console if stderr else self.rich_console
         return console.print(
             *objects,
             sep=sep,
@@ -211,9 +208,9 @@ class Console:
         file = file or (sys.stderr if stderr else sys.stdout)
         with Tqdm.external_write_mode(file=file):
             # if we are inside pager context, send the output to rich's buffer
-            if styled or self._paginate.get():
-                if styled:
-                    return self.rich_print(*objects, sep=sep, end=end, stderr=stderr)
+            if styled:
+                return self.rich_print(*objects, sep=sep, end=end, stderr=stderr)
+            elif self._paginate.get():
                 return self.rich_print(
                     sep.join(str(_object) for _object in objects),
                     style=None,
@@ -262,9 +259,7 @@ class Console:
     ) -> Optional[str]:
         while True:
             try:
-                response = self.rich_console.input(
-                    text + " ", markup=False, password=password
-                )
+                response = self.rich_console.input(f"{text} ", markup=False, password=password)
             except EOFError:
                 return None
 
@@ -285,9 +280,7 @@ class Console:
         """
         text = f"{statement} [y/n]:"
         answer = self.prompt(text, choices=["yes", "no", "y", "n"])
-        if not answer:
-            return False
-        return answer.startswith("y")
+        return answer.startswith("y") if answer else False
 
     @cached_property
     def rich_console(self) -> "RichConsole":

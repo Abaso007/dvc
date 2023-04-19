@@ -12,7 +12,7 @@ from dvc.utils.fs import remove
 logger = logging.getLogger(__name__)
 
 
-def init(root_dir=os.curdir, no_scm=False, force=False, subdir=False):  # noqa: C901
+def init(root_dir=os.curdir, no_scm=False, force=False, subdir=False):    # noqa: C901
     """
     Creates an empty repo on the given directory -- basically a
     `.dvc` directory with subdirectories for configuration and cache.
@@ -88,8 +88,7 @@ def init(root_dir=os.curdir, no_scm=False, force=False, subdir=False):  # noqa: 
             config.files["repo"],
             dvcignore,
         ]
-        ignore_file = context.scm.ignore_file
-        if ignore_file:
+        if ignore_file := context.scm.ignore_file:
             files.extend([os.path.join(dvc_dir, ignore_file)])
         proj.scm_context.track_file(files)
 

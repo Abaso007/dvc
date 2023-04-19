@@ -102,16 +102,16 @@ class ColorFormatter(logging.Formatter):
 
         ei = record.exc_info
         if ei:
-            cause = ""
-            if not getattr(record, "tb_only", False):
-                cause = ": ".join(_iter_causes(ei[1]))
+            cause = (
+                ""
+                if getattr(record, "tb_only", False)
+                else ": ".join(_iter_causes(ei[1]))
+            )
             sep = " - " if msg and cause else ""
             msg = msg + sep + cause
 
-        asctime = ""
         verbose = _is_verbose()
-        if verbose:
-            asctime = self.formatTime(record, self.datefmt)
+        asctime = self.formatTime(record, self.datefmt) if verbose else ""
         if verbose or self.show_traceback:
             if ei and not record.exc_text:
                 record.exc_text = self.formatException(ei)

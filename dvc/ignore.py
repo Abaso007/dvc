@@ -83,18 +83,17 @@ class DvcIgnorePatterns(DvcIgnore):
         else:
             return False
 
-        if os.name == "nt":
-            return normalize_file(path)
-        return path
+        return normalize_file(path) if os.name == "nt" else path
 
     def matches(self, dirname, basename, is_dir=False, details: bool = False):
-        path = self._get_normalize_path(dirname, basename)
-        if not path:
+        if path := self._get_normalize_path(dirname, basename):
+            return (
+                self._ignore_details(path, is_dir)
+                if details
+                else self.ignore(path, is_dir)
+            )
+        else:
             return False
-
-        if details:
-            return self._ignore_details(path, is_dir)
-        return self.ignore(path, is_dir)
 
     def ignore(self, path, is_dir):
         def matches(pattern, path, is_dir) -> bool:
@@ -134,14 +133,17 @@ class DvcIgnorePatterns(DvcIgnore):
         return result
 
     def __hash__(self):
-        return hash(self.dirname + ":" + str(self.pattern_list))
+        return hash(f"{self.dirname}:{str(self.pattern_list)}")
 
     def __eq__(self, other):
-        if not isinstance(other, DvcIgnorePatterns):
-            return NotImplemented
-        return (self.dirname == other.dirname) & (
-            [pattern.patterns for pattern in self.pattern_list]
-            == [pattern.patterns for pattern in other.pattern_list]
+        return (
+            (self.dirname == other.dirname)
+            & (
+                [pattern.patterns for pattern in self.pattern_list]
+                == [pattern.patterns for pattern in other.pattern_list]
+            )
+            if isinstance(other, DvcIgnorePatterns)
+            else NotImplemented
         )
 
     def __bool__(self):
@@ -193,9 +195,7 @@ class DvcIgnoreFilter:
 
     def _get_key(self, path):
         parts = self.fs.path.relparts(path, self.root_dir)
-        if parts == (os.curdir,):
-            return ()
-        return parts
+        return () if parts == (os.curdir,) else parts
 
     def _update_trie(self, dirname: str, trie: Trie) -> None:
         key = self._get_key(dirname)
@@ -253,8 +253,7 @@ class DvcIgnoreFilter:
         key = self._get_key(root)
         pattern_info = PatternInfo(f"/{dname}/", f"in sub_repo:{dname}")
         new_pattern = DvcIgnorePatterns([pattern_info], root, self.fs.sep)
-        old_pattern = ignore_trie.longest_prefix(key).value
-        if old_pattern:
+        if old_pattern := ignore_trie.longest_prefix(key).value:
             plist, prefix = merge_patterns(
                 self.fs.path.flavour,
                 old_pattern.pattern_list,
@@ -268,10 +267,9 @@ class DvcIgnoreFilter:
 
     def __call__(self, root, dirs, files, ignore_subrepos=True):
         abs_root = self.fs.path.abspath(root)
-        ignore_pattern = self._get_trie_pattern(
+        if ignore_pattern := self._get_trie_pattern(
             abs_root, dnames=dirs, ignore_subrepos=ignore_subrepos
-        )
-        if ignore_pattern:
+        ):
             dirs, files = ignore_pattern(abs_root, dirs, files)
         return dirs, files
 
@@ -290,10 +288,11 @@ class DvcIgnoreFilter:
 
         dirs, nondirs = self(path, dirs, nondirs, **kwargs)
 
-        if not detail:
-            return dirs + nondirs
-
-        return [fs_dict[name] for name in chain(dirs, nondirs)]
+        return (
+            [fs_dict[name] for name in chain(dirs, nondirs)]
+            if detail
+            else dirs + nondirs
+        )
 
     def walk(self, fs: "FileSystem", path: "AnyFSPath", **kwargs):
         detail = kwargs.get("detail", False)
@@ -342,8 +341,7 @@ class DvcIgnoreFilter:
 
         key = self._get_key(dirname)
 
-        ignore_pattern = ignores_trie.get(key)
-        if ignore_pattern:
+        if ignore_pattern := ignores_trie.get(key):
             return ignore_pattern
 
         prefix_key = ignores_trie.longest_prefix(key).key or ()
@@ -351,8 +349,7 @@ class DvcIgnoreFilter:
 
         dirs = list(
             takewhile(
-                lambda path: path != prefix,
-                (parent for parent in localfs.path.parents(dirname)),
+                lambda path: path != prefix, iter(localfs.path.parents(dirname))
             )
         )
         dirs.reverse()
@@ -369,8 +366,9 @@ class DvcIgnoreFilter:
         if self._outside_repo(path):
             return False
         dirname, basename = self.fs.path.split(self.fs.path.normpath(path))
-        ignore_pattern = self._get_trie_pattern(dirname, None, ignore_subrepos)
-        if ignore_pattern:
+        if ignore_pattern := self._get_trie_pattern(
+            dirname, None, ignore_subrepos
+        ):
             return ignore_pattern.matches(dirname, basename, is_dir)
         return False
 
@@ -396,13 +394,10 @@ class DvcIgnoreFilter:
         full_target = self.fs.path.abspath(target)
         if not self._outside_repo(full_target):
             dirname, basename = self.fs.path.split(self.fs.path.normpath(full_target))
-            pattern = self._get_trie_pattern(dirname)
-            if pattern:
-                matches = pattern.matches(
+            if pattern := self._get_trie_pattern(dirname):
+                if matches := pattern.matches(
                     dirname, basename, self.fs.isdir(full_target), True
-                )
-
-                if matches:
+                ):
                     return CheckIgnoreResult(target, True, matches)
         return _no_match(target)
 

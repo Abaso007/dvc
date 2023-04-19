@@ -63,7 +63,7 @@ class ParamsDependency(Dependency):
 
         info = {}
         if not self.params:
-            info.update(values)
+            info |= values
         for param in self.params:
             if param in values:
                 info[param] = values[param]
@@ -160,12 +160,9 @@ class ParamsDependency(Dependency):
     def get_hash(self):
         info = self.read_params()
 
-        missing_params = set(self.params) - set(info.keys())
-        if missing_params:
+        if missing_params := set(self.params) - set(info.keys()):
             raise MissingParamsError(
-                "Parameters '{}' are missing from '{}'.".format(
-                    ", ".join(missing_params), self
-                )
+                f"""Parameters '{", ".join(missing_params)}' are missing from '{self}'."""
             )
 
         return HashInfo(self.PARAM_PARAMS, info)  # type: ignore[arg-type]

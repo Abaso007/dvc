@@ -62,7 +62,7 @@ def test_stage_update(dvc, mocker):
     stage = Stage(dvc, "path", deps=[dep])
     reproduce = mocker.patch.object(stage, "reproduce")
     is_repo_import = mocker.patch(
-        __name__ + ".Stage.is_repo_import", new_callable=mocker.PropertyMock
+        f"{__name__}.Stage.is_repo_import", new_callable=mocker.PropertyMock
     )
 
     is_repo_import.return_value = True

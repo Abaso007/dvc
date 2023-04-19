@@ -25,10 +25,7 @@ def _parse_toml(text, path):
 def parse_toml(text, path, preserve_comments=False):
     rval = _parse_toml(text, path)
 
-    if preserve_comments:
-        return rval
-
-    return rval.unwrap()
+    return rval if preserve_comments else rval.unwrap()
 
 
 def parse_toml_for_update(text, path):

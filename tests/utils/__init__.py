@@ -64,7 +64,7 @@ class ANY:
         self.expected_type = expected_type
 
     def __repr__(self):
-        return "Any" + self.expected_type.__name__.capitalize()
+        return f"Any{self.expected_type.__name__.capitalize()}"
 
     def __eq__(self, other):
         return isinstance(other, self.expected_type)

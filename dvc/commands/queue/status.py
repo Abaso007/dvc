@@ -15,10 +15,7 @@ class CmdQueueStatus(CmdBase):
     """Show queue task and worker status."""
 
     def run(self) -> int:
-        result: List[
-            Dict[str, Optional[str]]
-        ] = self.repo.experiments.celery_queue.status()
-        if result:
+        if result := self.repo.experiments.celery_queue.status():
             all_headers = ["Task", "Name", "Created", "Status"]
             td = TabularData(all_headers)
             for exp in result:

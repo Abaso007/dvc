@@ -26,7 +26,7 @@ class Updater:
 
         self.updater_file = os.path.join(tmp_dir, self.UPDATER_FILE)
         self.lock = make_lock(
-            self.updater_file + ".lock",
+            f"{self.updater_file}.lock",
             tmp_dir=tmp_dir,
             friendly=friendly,
             hardlink_lock=hardlink_lock,

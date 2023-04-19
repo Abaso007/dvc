@@ -90,10 +90,8 @@ def test_subdir_init_no_option(tmp_dir, scm, monkeypatch, caplog):
             assert main(["init"]) == 1
 
     assert (
-        "{} is not tracked by any supported SCM tool (e.g. Git). "
-        "Use `--no-scm` if you don't want to use any SCM or "
-        "`--subdir` if initializing inside a subdirectory of a parent SCM "
-        "repository.".format(os.fspath(tmp_dir / "subdir")) in caplog.text
+        f"""{os.fspath(tmp_dir / "subdir")} is not tracked by any supported SCM tool (e.g. Git). Use `--no-scm` if you don't want to use any SCM or `--subdir` if initializing inside a subdirectory of a parent SCM repository."""
+        in caplog.text
     )
 
 

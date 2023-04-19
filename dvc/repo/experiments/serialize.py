@@ -18,9 +18,7 @@ class DeserializeError(DvcException):
 
 class _ISOEncoder(json.JSONEncoder):
     def default(self, o: object) -> Any:
-        if isinstance(o, datetime):
-            return o.isoformat()
-        return super().default(o)
+        return o.isoformat() if isinstance(o, datetime) else super().default(o)
 
 
 @dataclass(frozen=True)

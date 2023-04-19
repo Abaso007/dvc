@@ -46,8 +46,7 @@ class ExpStash(Stash):
         revs = {}
         for i, entry in enumerate(self):
             msg = entry.message.decode("utf-8").strip()
-            m = self.MESSAGE_RE.match(msg)
-            if m:
+            if m := self.MESSAGE_RE.match(msg):
                 revs[entry.new_sha.decode("utf-8")] = ExpStashEntry(
                     i,
                     m.group("rev"),
@@ -114,8 +113,7 @@ class ApplyStash(Stash):
         revs = {}
         for i, entry in enumerate(self):
             msg = entry.message.decode("utf-8").strip()
-            m = self.MESSAGE_RE.match(msg)
-            if m:
+            if m := self.MESSAGE_RE.match(msg):
                 revs[entry.new_sha.decode("utf-8")] = ApplyStashEntry(
                     i,
                     m.group("head_rev"),

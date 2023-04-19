@@ -27,17 +27,16 @@ def get_remote_executor_refs(scm: "Git", remote_url: str) -> List[str]:
     Args:
         remote_url : remote executor's url
     """
-    refs = []
-    for ref in iter_remote_refs(
-        scm,
-        remote_url,
-        base=EXPS_NAMESPACE,
-    ):
-        if ref == EXEC_CHECKPOINT or (
-            not ref.startswith(EXEC_NAMESPACE) and ref != EXPS_STASH
-        ):
-            refs.append(ref)
-    return refs
+    return [
+        ref
+        for ref in iter_remote_refs(
+            scm,
+            remote_url,
+            base=EXPS_NAMESPACE,
+        )
+        if ref == EXEC_CHECKPOINT
+        or (not ref.startswith(EXEC_NAMESPACE) and ref != EXPS_STASH)
+    ]
 
 
 def fetch_running_exp_from_temp_dir(
