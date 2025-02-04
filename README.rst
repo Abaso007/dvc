@@ -1,4 +1,6 @@
-|Banner|
+🚀 Check out our new product `DataChain <https://github.com/iterative/datachain>`_ (and give it a ⭐!) if you need to version and process a large number of files. Contact us at support@iterative.ai to discuss commercial solutions and support for AI reproducibility and data management scenarios.
+
+--------------------------
 
 `Website <https://dvc.org>`_
 • `Docs <https://dvc.org/doc>`_
@@ -90,8 +92,8 @@ Their results can be filtered and compared based on hyperparameters and metrics,
 
 .. _`VS Code Extension`:
 
-Visual Studio Code Extension
-============================
+VS Code Extension
+=================
 
 |VS Code|
 
@@ -280,8 +282,8 @@ Barrak, A., Eghan, E.E. and Adams, B. `On the Co-evolution of ML Pipelines and S
    :target: https://pypi.org/project/dvc
    :alt: PyPI Downloads
 
-.. |Packages| image:: https://img.shields.io/github/v/release/iterative/dvc?label=deb|pkg|rpm|exe&logo=GitHub
-   :target: https://github.com/iterative/dvc/releases/latest
+.. |Packages| image:: https://img.shields.io/badge/deb|pkg|rpm|exe-blue
+   :target: https://dvc.org/doc/install
    :alt: deb|pkg|rpm|exe
 
 .. |DOI| image:: https://img.shields.io/badge/DOI-10.5281/zenodo.3677553-blue.svg

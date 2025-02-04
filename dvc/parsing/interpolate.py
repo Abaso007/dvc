@@ -10,7 +10,8 @@ from dvc.exceptions import DvcException
 from dvc.utils.flatten import flatten
 
 if typing.TYPE_CHECKING:
-    from typing import List, Match, NoReturn
+    from re import Match
+    from typing import NoReturn
 
     from pyparsing import ParseException
 
@@ -73,7 +74,7 @@ def embrace(s: str):
 
 def escape_str(value):
     if os.name == "nt":
-        from subprocess import list2cmdline  # nosec B404
+        from subprocess import list2cmdline
 
         return list2cmdline([value])
     from shlex import quote
@@ -82,20 +83,18 @@ def escape_str(value):
 
 
 @singledispatch
-def to_str(obj) -> str:
+def to_str(obj, config=None) -> str:  # noqa: ARG001
     return str(obj)
 
 
 @to_str.register(bool)
-def _(obj: bool):
+def _(obj: bool, config=None):  # noqa: ARG001
     return "true" if obj else "false"
 
 
 @to_str.register(dict)
-def _(obj: dict):  # noqa: C901
-    from dvc.config import Config
-
-    config = Config.from_cwd().get("parsing", {})
+def _(obj: dict, config=None):  # noqa: C901
+    config = config or {}
 
     result = ""
     for k, v in flatten(obj).items():
@@ -207,10 +206,11 @@ def validate_value(value, key):
 
 def str_interpolate(
     template: str,
-    matches: "List[Match]",
+    matches: "list[Match]",
     context: "Context",
     skip_checks: bool = False,
     key=None,
+    config=None,
 ):
     index, buf = 0, ""
     for match in matches:
@@ -218,7 +218,7 @@ def str_interpolate(
         expr = get_expression(match, skip_checks=skip_checks)
         value = context.select(expr, unwrap=True)
         validate_value(value, key)
-        buf += template[index:start] + to_str(value)
+        buf += template[index:start] + to_str(value, config=config)
         index = end
     buf += template[index:]
     # regex already backtracks and avoids any `${` starting with
@@ -226,5 +226,5 @@ def str_interpolate(
     return buf.replace(r"\${", BRACE_OPEN)
 
 
-def is_exact_string(src: str, matches: "List[Match]"):
+def is_exact_string(src: str, matches: "list[Match]"):
     return len(matches) == 1 and src == matches[0].group(0)

@@ -1,16 +1,15 @@
 """Draws DAG in ASCII."""
 
-import logging
 import os
 import pydoc
-import sys
 
 from rich.pager import Pager
 
 from dvc.env import DVC_PAGER
+from dvc.log import logger
 from dvc.utils import format_link
 
-logger = logging.getLogger(__name__)
+logger = logger.getChild(__name__)
 
 
 DEFAULT_PAGER = "less"
@@ -51,15 +50,17 @@ def make_pager(cmd=None):
 
 
 def find_pager():
-    if not sys.stdout.isatty():
+    from . import Console
+
+    if not Console.isatty():
         return None
 
-    # pylint: disable=redefined-outer-name
     pager = os.getenv(DVC_PAGER)
     if not pager:
         pager = os.getenv(PAGER_ENV)
     if not pager:
-        if os.system(f"({DEFAULT_PAGER}) 2>{os.devnull}") != 0:  # nosec B605
+        ret = os.system(f"({DEFAULT_PAGER}) 2>{os.devnull}")  # noqa: S605
+        if ret != 0:
             logger.warning(
                 "Unable to find `less` in the PATH. Check out %s for more info.",
                 format_link("https://man.dvc.org/pipeline/show"),
@@ -84,7 +85,7 @@ def find_pager():
 
 def pager(text: str) -> None:
     _pager = find_pager()
-    logger.trace("Using pager: '%s'", _pager)  # type: ignore[attr-defined]
+    logger.trace("Using pager: '%s'", _pager)
     make_pager(_pager)(text)
 
 

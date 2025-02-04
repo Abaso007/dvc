@@ -1,16 +1,99 @@
-import logging
-from typing import Dict, List, Tuple
+from typing import TYPE_CHECKING
 
 from dvc.exceptions import DownloadError
+from dvc.log import logger
+from dvc.stage.cache import RunCacheNotSupported
+from dvc.ui import ui
 from dvc_data.index import DataIndex, FileStorage
 
 from . import locked
 
-logger = logging.getLogger(__name__)
+if TYPE_CHECKING:
+    from dvc.output import Output
+    from dvc.stage import Stage
+
+logger = logger.getChild(__name__)
+
+
+def _make_index_onerror(onerror, rev):
+    def _onerror(entry, exc):
+        if onerror:
+            return onerror(rev, entry, exc)
+
+    return _onerror
+
+
+def _collect_indexes(  # noqa: PLR0913
+    repo,
+    targets=None,
+    remote=None,
+    all_branches=False,
+    with_deps=False,
+    all_tags=False,
+    recursive=False,
+    all_commits=False,
+    revs=None,
+    workspace=True,
+    max_size=None,
+    types=None,
+    config=None,
+    onerror=None,
+    push=False,
+):
+    indexes = {}
+    collection_exc = None
+
+    config = config or {}
+    if remote:
+        core = config.get("core") or {}
+        core["remote"] = remote
+        config["core"] = core
+
+    def stage_filter(stage: "Stage") -> bool:
+        return not (push and stage.is_repo_import)
+
+    def outs_filter(out: "Output") -> bool:
+        if push and not out.can_push:
+            return False
+        return not (remote and out.remote and remote != out.remote)
+
+    for rev in repo.brancher(
+        revs=revs,
+        all_branches=all_branches,
+        all_tags=all_tags,
+        all_commits=all_commits,
+        workspace=workspace,
+    ):
+        try:
+            repo.config.merge(config)
+
+            idx = repo.index.targets_view(
+                targets,
+                with_deps=with_deps,
+                recursive=recursive,
+                max_size=max_size,
+                types=types,
+                stage_filter=stage_filter,
+                outs_filter=outs_filter,
+            )
+
+            idx.data["repo"].onerror = _make_index_onerror(onerror, rev)
+
+            indexes[rev or "workspace"] = idx
+        except Exception as exc:  # noqa: BLE001
+            if onerror:
+                onerror(rev, None, exc)
+            collection_exc = exc
+            logger.warning("failed to collect '%s', skipping", rev or "workspace")
+
+    if not indexes and collection_exc:
+        raise collection_exc
+
+    return indexes
 
 
 @locked
-def fetch(  # noqa: C901, PLR0913
+def fetch(  # noqa: PLR0913
     self,
     targets=None,
     jobs=None,
@@ -22,6 +105,11 @@ def fetch(  # noqa: C901, PLR0913
     all_commits=False,
     run_cache=False,
     revs=None,
+    workspace=True,
+    max_size=None,
+    types=None,
+    config=None,
+    onerror=None,
 ) -> int:
     """Download data items from a cloud and imported repositories
 
@@ -37,7 +125,6 @@ def fetch(  # noqa: C901, PLR0913
     """
     from fsspec.utils import tokenize
 
-    from dvc.fs.callbacks import Callback
     from dvc_data.index.fetch import collect
     from dvc_data.index.fetch import fetch as ifetch
 
@@ -50,56 +137,57 @@ def fetch(  # noqa: C901, PLR0913
     try:
         if run_cache:
             self.stage_cache.pull(remote)
+    except RunCacheNotSupported as e:
+        logger.debug("failed to pull run cache: %s", e)
     except DownloadError as exc:
         failed_count += exc.amount
 
-    indexes = []
-    index_keys = set()
-    for _ in self.brancher(
-        revs=revs,
+    indexes = _collect_indexes(
+        self,
+        targets=targets,
+        remote=remote,
         all_branches=all_branches,
+        with_deps=with_deps,
         all_tags=all_tags,
+        recursive=recursive,
         all_commits=all_commits,
-    ):
-        saved_remote = self.config["core"].get("remote")
-        try:
-            if remote:
-                self.config["core"]["remote"] = remote
+        revs=revs,
+        workspace=workspace,
+        max_size=max_size,
+        types=types,
+        config=config,
+        onerror=onerror,
+    )
 
-            idx = self.index.targets_view(
-                targets,
-                with_deps=with_deps,
-                recursive=recursive,
-            )
-            index_keys.add(idx.data_tree.hash_info.value)
-            indexes.append(idx.data["repo"])
-        finally:
-            if remote:
-                self.config["core"]["remote"] = saved_remote
+    cache_key = (
+        "fetch",
+        tokenize(sorted(idx.data_tree.hash_info.value for idx in indexes.values())),
+    )
 
-    cache_key = ("fetch", tokenize(sorted(index_keys)))
-
-    with Callback.as_tqdm_callback(
-        desc="Collecting",
-        unit="entry",
-    ) as cb:
+    with ui.progress(desc="Collecting", unit="entry", leave=True) as pb:
         data = collect(
-            indexes, cache_index=self.data_index, cache_key=cache_key, callback=cb
+            [idx.data["repo"] for idx in indexes.values()],
+            "remote",
+            cache_index=self.data_index,
+            cache_key=cache_key,
+            callback=pb.as_callback(),
         )
-    failed_count += _log_unversioned(data)
+    data, unversioned_count = _log_unversioned(data)
+    failed_count += unversioned_count
 
-    with Callback.as_tqdm_callback(
+    with ui.progress(
         desc="Fetching",
-        unit="file",
-    ) as cb:
+        bar_format="{desc}",
+        leave=True,
+    ) as pb:
         try:
             fetch_transferred, fetch_failed = ifetch(
                 data,
                 jobs=jobs,
-                callback=cb,
-            )  # pylint: disable=assignment-from-no-return
+                callback=pb.as_callback(),
+            )
         finally:
-            for fs_index in data.values():
+            for fs_index in data:
                 fs_index.close()
 
     if fetch_transferred:
@@ -114,11 +202,13 @@ def fetch(  # noqa: C901, PLR0913
     return transferred_count
 
 
-def _log_unversioned(data: Dict[Tuple[str, str], "DataIndex"]) -> int:
-    unversioned: List[str] = []
-    for by_fs, fs_index in data.items():
+def _log_unversioned(data: list["DataIndex"]) -> tuple[list["DataIndex"], int]:
+    ret: list[DataIndex] = []
+    unversioned: list[str] = []
+    for fs_index in data:
         remote = fs_index.storage_map[()].remote
         if not isinstance(remote, FileStorage) or not remote.fs.version_aware:
+            ret.append(fs_index)
             continue
 
         fs = remote.fs
@@ -126,11 +216,12 @@ def _log_unversioned(data: Dict[Tuple[str, str], "DataIndex"]) -> int:
         index.storage_map = fs_index.storage_map
         for key, entry in fs_index.iteritems():
             if entry.meta and not entry.meta.isdir and entry.meta.version_id is None:
-                unversioned.append(fs.unstrip_protocol(fs.path.join(remote.path, *key)))
+                unversioned.append(fs.unstrip_protocol(fs.join(remote.path, *key)))
             else:
                 index[key] = entry
         fs_index.close()
-        data[by_fs] = index
+        ret.append(index)
+
     if unversioned:
         logger.warning(
             (
@@ -139,4 +230,4 @@ def _log_unversioned(data: Dict[Tuple[str, str], "DataIndex"]) -> int:
             ),
             "\n".join(unversioned),
         )
-    return len(unversioned)
+    return ret, len(unversioned)

@@ -71,7 +71,7 @@ def test_post_run_after_kill(test_queue):
         except ProcessLookupError:
             time.sleep(0.1)
         if time.time() > timeout:
-            raise TimeoutError()
+            raise TimeoutError
 
     assert result_foo.get(timeout=10) == "foo"
 
@@ -110,15 +110,8 @@ def test_celery_queue_kill(test_queue, mocker, force):
             (mocker.Mock(headers={"id": "foobar"}), mock_entry_foobar),
         ],
     )
-    mocker.patch.object(
-        AsyncResult,
-        "ready",
-        return_value=False,
-    )
-    mark_mocker = mocker.patch.object(
-        test_queue.celery.backend,
-        "mark_as_failure",
-    )
+    mocker.patch.object(AsyncResult, "ready", return_value=False)
+    mark_mocker = mocker.patch.object(test_queue.celery.backend, "mark_as_failure")
 
     def kill_function(rev):
         if rev == "foo":
@@ -132,9 +125,11 @@ def test_celery_queue_kill(test_queue, mocker, force):
     )
     with pytest.raises(CannotKillTasksError, match="Task 'foobar' is initializing,"):
         test_queue.kill(["bar", "foo", "foobar"], force=force)
-    assert kill_mock.called_once_with(mock_entry_foo.stash_rev)
-    assert kill_mock.called_once_with(mock_entry_bar.stash_rev)
-    assert kill_mock.called_once_with(mock_entry_foobar.stash_rev)
+    assert kill_mock.call_args_list == [
+        mocker.call(mock_entry_bar.stash_rev),
+        mocker.call(mock_entry_foo.stash_rev),
+        mocker.call(mock_entry_foobar.stash_rev),
+    ]
     mark_mocker.assert_called_once_with("bar", None)
 
 
@@ -146,18 +141,14 @@ def test_celery_queue_kill_invalid(test_queue, mocker, force):
     mocker.patch.object(
         test_queue,
         "match_queue_entry_by_name",
-        return_value={
-            "bar": mock_entry_bar,
-            "foo": mock_entry_foo,
-            "foobar": None,
-        },
+        return_value={"bar": mock_entry_bar, "foo": mock_entry_foo, "foobar": None},
     )
 
     kill_mock = mocker.patch.object(test_queue, "_kill_entries")
 
     with pytest.raises(UnresolvedExpNamesError):
         test_queue.kill(["bar", "foo", "foobar"], force=force)
-    assert kill_mock.called_once_with(
+    kill_mock.assert_called_once_with(
         {mock_entry_foo: "foo", mock_entry_bar: "bar"}, force
     )
 
@@ -198,13 +189,13 @@ def test_queue_status(test_queue, scm, mocker):
 
     def resolve_commit(rev):
         if rev == "active":
-            commit_time = datetime(2022, 8, 7).timestamp()
+            commit_time = datetime(2022, 8, 7).timestamp()  # noqa: DTZ001
         elif rev == "queued":
-            commit_time = datetime(2022, 8, 6).timestamp()
+            commit_time = datetime(2022, 8, 6).timestamp()  # noqa: DTZ001
         elif rev == "failed":
-            commit_time = datetime(2022, 8, 5).timestamp()
+            commit_time = datetime(2022, 8, 5).timestamp()  # noqa: DTZ001
         elif rev == "success":
-            commit_time = datetime(2022, 8, 4).timestamp()
+            commit_time = datetime(2022, 8, 4).timestamp()  # noqa: DTZ001
         return mocker.Mock(commit_time=commit_time)
 
     mocker.patch.object(
@@ -239,24 +230,24 @@ def test_queue_status(test_queue, scm, mocker):
             "name": "foo",
             "rev": "active",
             "status": "Running",
-            "timestamp": datetime(2022, 8, 7, 0, 0, 0),
+            "timestamp": datetime(2022, 8, 7, 0, 0, 0),  # noqa: DTZ001
         },
         {
             "name": None,
             "rev": "queued",
             "status": "Queued",
-            "timestamp": datetime(2022, 8, 6, 0, 0, 0),
+            "timestamp": datetime(2022, 8, 6, 0, 0, 0),  # noqa: DTZ001
         },
         {
             "name": "bar",
             "rev": "failed",
             "status": "Failed",
-            "timestamp": datetime(2022, 8, 5, 0, 0, 0),
+            "timestamp": datetime(2022, 8, 5, 0, 0, 0),  # noqa: DTZ001
         },
         {
             "name": "foobar",
             "rev": "success",
             "status": "Success",
-            "timestamp": datetime(2022, 8, 4, 0, 0, 0),
+            "timestamp": datetime(2022, 8, 4, 0, 0, 0),  # noqa: DTZ001
         },
     ]

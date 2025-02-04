@@ -1,11 +1,8 @@
 import shutil
 
-# pylint: disable=unused-argument
 
-
-def test_sharing(bench_dvc, tmp_dir, dvc, dataset, remote):
-    bench_dvc("add", dataset)
-    bench_dvc("add", dataset, name="noop")
+def test_sharing(bench_dvc, tmp_dir, dvc, make_dataset, remote):
+    dataset = make_dataset(cache=True, dvcfile=True)
 
     bench_dvc("push")
     bench_dvc("push", name="noop")
@@ -13,7 +10,5 @@ def test_sharing(bench_dvc, tmp_dir, dvc, dataset, remote):
     shutil.rmtree(dataset)
     shutil.rmtree(tmp_dir / ".dvc" / "cache")
 
-    bench_dvc("pull")
-    bench_dvc("pull", name="noop")
-
-    bench_dvc("checkout", name="noop")
+    bench_dvc("fetch")
+    bench_dvc("fetch", name="noop")

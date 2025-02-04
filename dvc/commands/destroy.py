@@ -1,10 +1,9 @@
-import argparse
-import logging
-
+from dvc.cli import formatter
 from dvc.cli.command import CmdBase
 from dvc.cli.utils import append_doc_link
+from dvc.log import logger
 
-logger = logging.getLogger(__name__)
+logger = logger.getChild(__name__)
 
 
 class CmdDestroy(CmdBase):
@@ -21,7 +20,7 @@ class CmdDestroy(CmdBase):
             )
 
             if not self.args.force and not ui.confirm(statement):
-                raise DvcException(
+                raise DvcException(  # noqa: TRY301
                     "cannot destroy without a confirmation from the user."
                     " Use `-f` to force."
                 )
@@ -41,7 +40,7 @@ def add_parser(subparsers, parent_parser):
         parents=[parent_parser],
         description=append_doc_link(DESTROY_HELP, "destroy"),
         help=DESTROY_HELP,
-        formatter_class=argparse.RawDescriptionHelpFormatter,
+        formatter_class=formatter.RawDescriptionHelpFormatter,
     )
     destroy_parser.add_argument(
         "-f",

@@ -1,13 +1,12 @@
-import logging
 import os
 import tempfile
 import threading
-from contextlib import contextmanager
-from typing import TYPE_CHECKING, Dict, Iterator, Optional, Tuple
+from typing import TYPE_CHECKING, Optional
 
 from funcy import retry, wrap_with
 
 from dvc.exceptions import NotDvcRepoError
+from dvc.log import logger
 from dvc.repo import Repo
 from dvc.scm import CloneError, map_scm_exception
 from dvc.utils import relpath
@@ -15,19 +14,13 @@ from dvc.utils import relpath
 if TYPE_CHECKING:
     from dvc.scm import Git
 
-logger = logging.getLogger(__name__)
+logger = logger.getChild(__name__)
 
 
-@contextmanager
 @map_scm_exception()
-def _external_repo(
-    url,
-    rev: Optional[str] = None,
-    for_write: bool = False,
-    **kwargs,
-) -> Iterator["Repo"]:
+def _external_repo(url, rev: Optional[str] = None, **kwargs) -> "Repo":
     logger.debug("Creating external repo %s@%s", url, rev)
-    path = _cached_clone(url, rev, for_write=for_write)
+    path = _cached_clone(url, rev)
     # Local HEAD points to the tip of whatever branch we first cloned from
     # (which may not be the default branch), use origin/HEAD here to get
     # the tip of the default branch
@@ -38,11 +31,6 @@ def _external_repo(
     config.update(kwargs.pop("config", None) or {})
 
     main_root = "/"
-    if for_write:
-        # we already checked out needed revision
-        rev = None
-        main_root = path
-
     repo_kwargs = dict(
         root_dir=path,
         url=url,
@@ -52,14 +40,7 @@ def _external_repo(
         **kwargs,
     )
 
-    repo = Repo(**repo_kwargs)
-
-    try:
-        yield repo
-    finally:
-        repo.close()
-        if for_write:
-            _remove(path)
+    return Repo(**repo_kwargs)
 
 
 def open_repo(url, *args, **kwargs):
@@ -67,6 +48,7 @@ def open_repo(url, *args, **kwargs):
         url = os.getcwd()
 
     if os.path.exists(url):
+        url = os.path.abspath(url)
         try:
             config = _get_remote_config(url)
             config.update(kwargs.get("config") or {})
@@ -85,15 +67,15 @@ def erepo_factory(url, root_dir, cache_config):
         _config = cache_config.copy()
         if os.path.isdir(url):
             fs = fs or localfs
-            repo_path = os.path.join(url, *fs.path.relparts(path, root_dir))
+            repo_path = os.path.join(url, *fs.relparts(path, root_dir))
             _config.update(_get_remote_config(repo_path))
         return Repo(path, fs=fs, config=_config, **_kwargs)
 
     return make_repo
 
 
-CLONES: Dict[str, Tuple[str, bool]] = {}
-CACHE_DIRS: Dict[str, str] = {}
+CLONES: dict[str, tuple[str, bool]] = {}
+CACHE_DIRS: dict[str, str] = {}
 
 
 @wrap_with(threading.Lock())
@@ -139,20 +121,19 @@ def _get_remote_config(url):
         repo.close()
 
 
-def _cached_clone(url, rev, for_write=False):
+def _cached_clone(url, rev):
     """Clone an external git repo to a temporary directory.
 
     Returns the path to a local temporary directory with the specified
-    revision checked out. If for_write is set prevents reusing this dir via
-    cache.
+    revision checked out.
     """
     from shutil import copytree
 
     # even if we have already cloned this repo, we may need to
     # fetch/fast-forward to get specified rev
-    clone_path, shallow = _clone_default_branch(url, rev, for_write=for_write)
+    clone_path, shallow = _clone_default_branch(url, rev)
 
-    if not for_write and (url) in CLONES:
+    if url in CLONES:
         return CLONES[url][0]
 
     # Copy to a new dir to keep the clone clean
@@ -160,16 +141,12 @@ def _cached_clone(url, rev, for_write=False):
     logger.debug("erepo: making a copy of %s clone", url)
     copytree(clone_path, repo_path)
 
-    # Check out the specified revision
-    if for_write:
-        _git_checkout(repo_path, rev)
-    else:
-        CLONES[url] = (repo_path, shallow)
+    CLONES[url] = (repo_path, shallow)
     return repo_path
 
 
 @wrap_with(threading.Lock())
-def _clone_default_branch(url, rev, for_write=False):  # noqa: C901, PLR0912
+def _clone_default_branch(url, rev):
     """Get or create a clean clone of the url.
 
     The cloned is reactualized with git pull unless rev is a known sha.
@@ -203,7 +180,7 @@ def _clone_default_branch(url, rev, for_write=False):  # noqa: C901, PLR0912
 
             logger.debug("erepo: git clone '%s' to a temporary dir", url)
             clone_path = tempfile.mkdtemp("dvc-clone")
-            if not for_write and rev and not Git.is_sha(rev):
+            if rev and not Git.is_sha(rev):
                 # If rev is a tag or branch name try shallow clone first
 
                 try:
@@ -246,17 +223,6 @@ def _merge_upstream(git: "Git"):
             git.merge(upstream)
     except SCMError:
         pass
-
-
-def _git_checkout(repo_path, rev):
-    from dvc.scm import Git
-
-    logger.debug("erepo: git checkout %s@%s", repo_path, rev)
-    git = Git(repo_path)
-    try:
-        git.checkout(rev)
-    finally:
-        git.close()
 
 
 def _remove(path):

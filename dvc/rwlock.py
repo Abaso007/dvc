@@ -1,5 +1,4 @@
 import json
-import logging
 import os
 from collections import defaultdict
 from contextlib import contextmanager
@@ -7,12 +6,14 @@ from contextlib import contextmanager
 import psutil
 from voluptuous import Invalid, Optional, Required, Schema
 
+from dvc.log import logger
+
 from .exceptions import DvcException
 from .fs import localfs
 from .lock import make_lock
 from .utils import relpath
 
-logger = logging.getLogger(__name__)
+logger = logger.getChild(__name__)
 
 
 INFO_SCHEMA = {Required("pid"): int, Required("cmd"): str}
@@ -31,23 +32,21 @@ RWLOCK_LOCK = "rwlock.lock"
 class RWLockFileCorruptedError(DvcException):
     def __init__(self, path):
         super().__init__(
-            "Unable to read RWLock-file '{}'. JSON structure is corrupted".format(
-                relpath(path)
-            )
+            f"Unable to read RWLock-file {relpath(path)!r}. JSON structure is corrupted"
         )
 
 
 class RWLockFileFormatError(DvcException):
     def __init__(self, path):
-        super().__init__(f"RWLock-file '{relpath(path)}' format error.")
+        super().__init__(f"RWLock-file {relpath(path)!r} format error.")
 
 
 @contextmanager
 def _edit_rwlock(lock_dir, fs, hardlink):
-    path = fs.path.join(lock_dir, RWLOCK_FILE)
+    path = fs.join(lock_dir, RWLOCK_FILE)
 
     rwlock_guard = make_lock(
-        fs.path.join(lock_dir, RWLOCK_LOCK),
+        fs.join(lock_dir, RWLOCK_LOCK),
         tmp_dir=lock_dir,
         hardlink_lock=hardlink,
     )
@@ -83,7 +82,7 @@ def _check_blockers(tmp_dir, lock, info, *, mode, waiters):  # noqa: C901, PLR09
     to_release = defaultdict(list)
     for path, infos in lock[mode].items():
         for waiter_path in waiters:
-            if localfs.path.overlaps(waiter_path, path):
+            if localfs.overlaps(waiter_path, path):
                 break
         else:
             continue
@@ -106,7 +105,7 @@ def _check_blockers(tmp_dir, lock, info, *, mode, waiters):  # noqa: C901, PLR09
                 logger.warning(
                     (
                         "Process '%s' with (Pid %s), in RWLock-file '%s'"
-                        " had been killed. Auto remove it from the lock file."
+                        " had been killed. Auto removed it from the lock file."
                     ),
                     cmd,
                     pid,

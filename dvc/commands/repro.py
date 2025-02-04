@@ -1,6 +1,4 @@
-import argparse
-
-from dvc.cli import completion
+from dvc.cli import completion, formatter
 from dvc.cli.command import CmdBase
 from dvc.cli.utils import append_doc_link
 from dvc.commands.status import CmdDataStatus
@@ -33,6 +31,7 @@ class CmdRepro(CmdBase):
             "force_downstream": self.args.force_downstream,
             "pull": self.args.pull,
             "allow_missing": self.args.allow_missing,
+            "on_error": self.args.on_error,
         }
 
     @property
@@ -118,10 +117,7 @@ and then the stage name name.
         "--pull",
         action="store_true",
         default=False,
-        help=(
-            "Try automatically pulling missing cache for outputs restored "
-            "from the run-cache."
-        ),
+        help="Try automatically pulling missing data.",
     )
     repro_parser.add_argument(
         "--allow-missing",
@@ -137,6 +133,26 @@ and then the stage name name.
             "Only print the commands that would be executed without actually executing."
         ),
     )
+    repro_parser.add_argument(
+        "-k",
+        "--keep-going",
+        action="store_const",
+        default="fail",
+        const="keep-going",
+        dest="on_error",
+        help=(
+            "Continue executing, skipping stages having dependencies "
+            "on the failed stages"
+        ),
+    )
+    repro_parser.add_argument(
+        "--ignore-errors",
+        action="store_const",
+        default="fail",
+        const="ignore",
+        dest="on_error",
+        help="Ignore errors from stages.",
+    )
 
 
 def add_parser(subparsers, parent_parser):
@@ -146,7 +162,7 @@ def add_parser(subparsers, parent_parser):
         parents=[parent_parser],
         description=append_doc_link(REPRO_HELP, "repro"),
         help=REPRO_HELP,
-        formatter_class=argparse.RawDescriptionHelpFormatter,
+        formatter_class=formatter.RawDescriptionHelpFormatter,
     )
     # repro/exp run shared args
     add_arguments(repro_parser)
